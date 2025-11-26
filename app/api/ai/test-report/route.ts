@@ -50,7 +50,7 @@ export async function GET() {
     
     // Calculate base report
     const roi = calculateROI(sampleAssessmentData);
-    const score = calculateOpportunityScore(sampleAssessmentData);
+    const score = await calculateOpportunityScore(sampleAssessmentData);
     const baseReport = generateCustomerReport(sampleAssessmentData, roi, score);
     
     // Enhance with AI
