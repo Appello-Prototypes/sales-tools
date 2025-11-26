@@ -25,7 +25,7 @@ export async function GET(
     
     const { submissionId } = await params;
     
-    const assessment = await Assessment.findOne({ submissionId }).lean();
+    const assessment: any = await (Assessment as any).findOne({ submissionId }).lean();
     
     if (!assessment) {
       return NextResponse.json(
@@ -110,7 +110,7 @@ export async function PATCH(
     const { submissionId } = await params;
     const body = await request.json();
     
-    const assessment = await Assessment.findOne({ submissionId });
+    const assessment: any = await (Assessment as any).findOne({ submissionId });
     
     if (!assessment) {
       return NextResponse.json(

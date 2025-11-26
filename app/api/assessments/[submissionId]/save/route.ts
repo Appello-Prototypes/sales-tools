@@ -13,7 +13,7 @@ export async function POST(
     const body = await request.json();
     const { step, data } = body;
     
-    const assessment = await Assessment.findOne({ submissionId });
+    const assessment: any = await (Assessment as any).findOne({ submissionId });
     
     if (!assessment) {
       return NextResponse.json(

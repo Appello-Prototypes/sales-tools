@@ -21,7 +21,7 @@ export async function GET(
     
     await connectDB();
     
-    const assessment = await Assessment.findOne({ submissionId }).lean();
+    const assessment: any = await (Assessment as any).findOne({ submissionId }).lean();
     
     if (!assessment) {
       return NextResponse.json(

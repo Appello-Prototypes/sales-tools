@@ -21,7 +21,7 @@ export async function DELETE(
     
     const { submissionId } = await params;
     
-    const assessment = await Assessment.findOneAndDelete({ submissionId });
+    const assessment: any = await (Assessment as any).findOneAndDelete({ submissionId });
     
     if (!assessment) {
       return NextResponse.json(

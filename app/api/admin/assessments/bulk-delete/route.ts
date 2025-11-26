@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const result = await Assessment.deleteMany({
+    const result: any = await (Assessment as any).deleteMany({
       submissionId: { $in: submissionIds }
     });
     

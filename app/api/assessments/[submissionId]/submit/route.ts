@@ -23,7 +23,7 @@ export async function POST(
     const debugLog = createDebugLog(submissionId);
     logSubmission(submissionId, 'Assessment submission started', { submissionId });
     
-    const assessment = await Assessment.findOne({ submissionId });
+    const assessment: any = await (Assessment as any).findOne({ submissionId });
     
     if (!assessment) {
       return NextResponse.json(

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     if (!settings) {
       // Create default settings
-      settings = await LetterSettings.create({
+      settings = await (LetterSettings as any).create({
         settingsType: 'default',
         aiModel: 'claude-sonnet-4-5-20250929',
         maxTokens: 2000,
@@ -187,7 +187,7 @@ export async function PUT(request: NextRequest) {
     let settings = await LetterSettings.findOne({ settingsType: 'default' });
 
     if (!settings) {
-      settings = await LetterSettings.create({
+      settings = await (LetterSettings as any).create({
         settingsType: 'default',
         aiModel: aiModel || 'claude-sonnet-4-5-20250929',
         maxTokens: maxTokens || 2000,

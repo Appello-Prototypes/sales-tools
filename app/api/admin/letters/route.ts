@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       status,
     } = body;
 
-    const letter = await GeneratedLetter.create({
+    const letter = await (GeneratedLetter as any).create({
       companyId,
       companyName,
       companyDomain,

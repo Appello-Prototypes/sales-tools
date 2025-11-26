@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch letter settings
-    const settings = await LetterSettings.findOne({ settingsType: 'default' });
+    const settings: any = await (LetterSettings as any).findOne({ settingsType: 'default' });
     if (!settings) {
       return NextResponse.json({ error: 'Letter settings not configured' }, { status: 500 });
     }
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
     const letter = data.content[0]?.text || '';
 
     // Save generated letter to DB
-    const newLetter = await GeneratedLetter.create({
+    const newLetter = await (GeneratedLetter as any).create({
       companyId,
       companyName: companyData.name,
       companyDomain: companyData.domain,

@@ -400,8 +400,8 @@ export async function POST(request: NextRequest) {
       
       const companyResearch = await researchCompany({
         ...data,
-        companyName: assessment.companyName || data.companyName,
-        website: assessment.website || data.website,
+        companyName: (assessment as any).companyName || (data as any).companyName,
+        website: (assessment as any).website || (data as any).website,
       }, researchAuditTrail);
       
       logAI(submissionId, 'Company research completed', {

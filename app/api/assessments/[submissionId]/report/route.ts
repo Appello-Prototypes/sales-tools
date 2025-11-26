@@ -15,7 +15,7 @@ export async function GET(
     
     const { submissionId } = await params;
     
-    const assessment = await Assessment.findOne({ submissionId }).lean();
+    const assessment: any = await (Assessment as any).findOne({ submissionId }).lean();
     
     if (!assessment) {
       return NextResponse.json(
@@ -83,7 +83,7 @@ export async function GET(
       auditTrail = result.auditTrail;
       
       // Save report and audit trail to database
-      await Assessment.updateOne(
+      await (Assessment as any).updateOne(
         { submissionId },
         { 
           $set: { 
@@ -97,7 +97,7 @@ export async function GET(
       console.error('AI enhancement failed, using base report:', error);
       // Continue with base report if AI fails
       // Still save it
-      await Assessment.updateOne(
+      await (Assessment as any).updateOne(
         { submissionId },
         { 
           $set: { 

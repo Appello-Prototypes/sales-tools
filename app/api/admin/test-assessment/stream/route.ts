@@ -142,9 +142,9 @@ export async function POST(request: NextRequest) {
           });
           const roi = calculateROI(data);
           sendLog('success', '✅ ROI calculated', {
-            annualSavings: roi.annualSavings,
-            paybackPeriod: roi.paybackPeriod,
-            fiveYearROI: roi.fiveYearROI,
+            annualSavings: (roi as any).annualSavings,
+            paybackPeriod: (roi as any).paybackPeriod,
+            fiveYearROI: (roi as any).fiveYearROI,
           });
           
           // Step 1: Conduct comprehensive company research
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
           sendLog('info', '🌐 Researching company website...');
           const companyResearch = await researchCompany({
             ...data,
-            companyName: assessment.companyName || data.companyName,
+            companyName: (assessment as any).companyName || (data as any).companyName,
             website: assessment.website || data.website,
           }, researchAuditTrail, sendLog);
           

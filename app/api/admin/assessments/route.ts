@@ -42,14 +42,14 @@ export async function GET(request: NextRequest) {
     }
     
     // Get assessments with pagination - exclude heavy fields for list view
-    const assessments = await Assessment.find(query)
+    const assessments = await (Assessment as any).find(query)
       .select('-auditTrail -adminReport -customerReport -debugLog') // Exclude large fields
       .sort(sort)
       .skip(skip)
       .limit(limit)
       .lean();
     
-    const total = await Assessment.countDocuments(query);
+    const total: any = await (Assessment as any).countDocuments(query);
     
     return NextResponse.json({
       assessments,

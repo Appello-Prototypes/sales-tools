@@ -11,7 +11,7 @@ export async function GET(
     
     const { submissionId } = await params;
     
-    const assessment = await Assessment.findOne({ submissionId }).lean();
+    const assessment: any = await (Assessment as any).findOne({ submissionId }).lean();
     
     if (!assessment) {
       return NextResponse.json(
