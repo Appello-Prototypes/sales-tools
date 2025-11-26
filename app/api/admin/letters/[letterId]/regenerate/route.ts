@@ -18,12 +18,12 @@ export async function POST(
     const { letterId } = await params;
     const { feedback } = await request.json();
 
-    const letter = await GeneratedLetter.findById(letterId);
+    const letter: any = await (GeneratedLetter as any).findById(letterId);
     if (!letter) {
       return NextResponse.json({ error: 'Letter not found' }, { status: 404 });
     }
 
-    const settings = await LetterSettings.findOne({ settingsType: 'default' });
+    const settings: any = await (LetterSettings as any).findOne({ settingsType: 'default' });
     if (!settings) {
       return NextResponse.json({ error: 'Letter settings not configured' }, { status: 500 });
     }

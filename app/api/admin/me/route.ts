@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     
     await connectDB();
     
-    const userDoc = await User.findById(user.userId).select('-password').lean();
+    const userDoc: any = await (User as any).findById(user.userId).select('-password').lean();
     
     if (!userDoc) {
       return NextResponse.json(

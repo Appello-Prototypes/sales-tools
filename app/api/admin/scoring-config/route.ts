@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     
     // Try to load custom prompts from database
     await connectDB();
-    const dbConfig = await AssessmentConfig.findOne({ type: 'scoring' }).lean();
+    const dbConfig: any = await (AssessmentConfig as any).findOne({ type: 'scoring' }).lean();
     
     return NextResponse.json({
       config,
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     
     // Save to database
     await connectDB();
-    await AssessmentConfig.findOneAndUpdate(
+    await (AssessmentConfig as any).findOneAndUpdate(
       { type: 'scoring' },
       {
         type: 'scoring',

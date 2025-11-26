@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user: any = await (User as any).findOne({ email: email.toLowerCase() });
     
     if (!user) {
       return NextResponse.json(

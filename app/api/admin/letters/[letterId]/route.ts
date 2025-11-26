@@ -15,7 +15,7 @@ export async function GET(
 
     await connectDB();
     const { letterId } = await params;
-    const letter = await GeneratedLetter.findById(letterId);
+    const letter: any = await (GeneratedLetter as any).findById(letterId);
 
     if (!letter) {
       return NextResponse.json({ error: 'Letter not found' }, { status: 404 });
@@ -46,7 +46,7 @@ export async function PATCH(
     const body = await request.json();
     const { generatedText, status, recipientName, recipientTitle } = body;
 
-    const letter = await GeneratedLetter.findById(letterId);
+    const letter: any = await (GeneratedLetter as any).findById(letterId);
     if (!letter) {
       return NextResponse.json({ error: 'Letter not found' }, { status: 404 });
     }
@@ -81,7 +81,7 @@ export async function DELETE(
 
     await connectDB();
     const { letterId } = await params;
-    const letter = await GeneratedLetter.findByIdAndDelete(letterId);
+    const letter: any = await (GeneratedLetter as any).findByIdAndDelete(letterId);
 
     if (!letter) {
       return NextResponse.json({ error: 'Letter not found' }, { status: 404 });

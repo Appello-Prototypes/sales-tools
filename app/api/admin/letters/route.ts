@@ -32,12 +32,12 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     const [letters, total] = await Promise.all([
-      GeneratedLetter.find(query)
+      (GeneratedLetter as any).find(query)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      GeneratedLetter.countDocuments(query),
+      (GeneratedLetter as any).countDocuments(query),
     ]);
 
     return NextResponse.json({
