@@ -626,7 +626,7 @@ export default function SubmissionsPage() {
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </Link>
-                              {assessment.adminReport && (
+                              {(assessment as any).adminReport && (
                                 <Link href={`/admin/reports/${assessment.submissionId}`}>
                                   <Button variant="ghost" size="sm" title="View Internal Report" className="text-green-600 hover:text-green-700">
                                     <Briefcase className="h-4 w-4" />
