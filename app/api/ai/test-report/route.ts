@@ -69,17 +69,17 @@ export async function GET() {
         roiPercentage: baseReport.roiPercentage,
       },
       aiEnhanced: {
-        industryBenchmarks: enhancedReport.industryBenchmarks,
-        peerComparison: enhancedReport.peerComparison,
-        successStories: enhancedReport.successStories,
-        personalizedInsights: enhancedReport.personalizedInsights,
-        nextSteps: enhancedReport.nextSteps,
+        industryBenchmarks: (enhancedReport as any).industryBenchmarks,
+        peerComparison: (enhancedReport as any).peerComparison,
+        successStories: (enhancedReport as any).successStories,
+        personalizedInsights: (enhancedReport as any).personalizedInsights,
+        nextSteps: (enhancedReport as any).nextSteps,
       },
       hasAIEnhancements: !!(
-        enhancedReport.industryBenchmarks ||
-        enhancedReport.peerComparison ||
-        enhancedReport.successStories ||
-        enhancedReport.personalizedInsights
+        (enhancedReport as any).industryBenchmarks ||
+        (enhancedReport as any).peerComparison ||
+        (enhancedReport as any).successStories ||
+        (enhancedReport as any).personalizedInsights
       ),
     }, { status: 200 });
   } catch (error: any) {
