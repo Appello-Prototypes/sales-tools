@@ -510,7 +510,7 @@ export default function AssessmentFormPage() {
                                     <p className="text-sm font-medium">{cq.question}</p>
                                     {cq.options && (
                                       <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground mt-1 ml-4">
-                                        {cq.options.map((opt, optIndex) => (
+                                        {cq.options.map((opt: string, optIndex: number) => (
                                           <li key={optIndex}>{opt}</li>
                                         ))}
                                       </ul>
