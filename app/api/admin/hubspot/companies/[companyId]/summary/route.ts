@@ -45,61 +45,71 @@ export async function GET(
     const companyData = await companyResponse.json();
     const company = companyData.properties;
 
-    // Fetch contacts
-    const contactsUrl = `https://api.hubapi.com/crm/v4/objects/contacts/search`;
-    const contactsResponse = await fetch(contactsUrl, {
-      method: 'POST',
+    // Fetch contacts via associations
+    let contacts: any[] = [];
+    const contactAssocUrl = `https://api.hubapi.com/crm/v3/objects/companies/${companyId}/associations/contacts`;
+    const contactAssocResponse = await fetch(contactAssocUrl, {
       headers: {
         'Authorization': `Bearer ${hubspotApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        filterGroups: [
-          {
-            filters: [
-              {
-                propertyName: 'associatedcompanyid',
-                operator: 'EQ',
-                value: companyId,
-              },
-            ],
-          },
-        ],
-        properties: ['firstname', 'lastname', 'email', 'jobtitle'],
-        limit: 10,
-      }),
     });
+    
+    if (contactAssocResponse.ok) {
+      const contactAssocData = await contactAssocResponse.json();
+      const contactIds = contactAssocData.results?.map((r: any) => r.id).slice(0, 10) || [];
+      
+      if (contactIds.length > 0) {
+        const contactBatchResponse = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/batch/read', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${hubspotApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            inputs: contactIds.map((id: string) => ({ id })),
+            properties: ['firstname', 'lastname', 'email', 'jobtitle'],
+          }),
+        });
+        if (contactBatchResponse.ok) {
+          const contactBatchData = await contactBatchResponse.json();
+          contacts = contactBatchData.results || [];
+        }
+      }
+    }
 
-    const contactsData = contactsResponse.ok ? await contactsResponse.json() : { results: [] };
-    const contacts = contactsData.results || [];
-
-    // Fetch deals
-    const dealsUrl = `https://api.hubapi.com/crm/v4/objects/deals/search`;
-    const dealsResponse = await fetch(dealsUrl, {
-      method: 'POST',
+    // Fetch deals via associations
+    let deals: any[] = [];
+    const dealAssocUrl = `https://api.hubapi.com/crm/v3/objects/companies/${companyId}/associations/deals`;
+    const dealAssocResponse = await fetch(dealAssocUrl, {
       headers: {
         'Authorization': `Bearer ${hubspotApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        filterGroups: [
-          {
-            filters: [
-              {
-                propertyName: 'associatedcompanyid',
-                operator: 'EQ',
-                value: companyId,
-              },
-            ],
-          },
-        ],
-        properties: ['dealname', 'dealstage', 'amount', 'closedate'],
-        limit: 10,
-      }),
     });
-
-    const dealsData = dealsResponse.ok ? await dealsResponse.json() : { results: [] };
-    const deals = dealsData.results || [];
+    
+    if (dealAssocResponse.ok) {
+      const dealAssocData = await dealAssocResponse.json();
+      const dealIds = dealAssocData.results?.map((r: any) => r.id).slice(0, 10) || [];
+      
+      if (dealIds.length > 0) {
+        const dealBatchResponse = await fetch('https://api.hubapi.com/crm/v3/objects/deals/batch/read', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${hubspotApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            inputs: dealIds.map((id: string) => ({ id })),
+            properties: ['dealname', 'dealstage', 'amount', 'closedate'],
+          }),
+        });
+        if (dealBatchResponse.ok) {
+          const dealBatchData = await dealBatchResponse.json();
+          deals = dealBatchData.results || [];
+        }
+      }
+    }
 
     // Build prompt for AI summary
     const prompt = `Analyze the following HubSpot company data and provide a comprehensive business intelligence summary:

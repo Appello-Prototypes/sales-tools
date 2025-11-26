@@ -128,6 +128,7 @@ export async function POST(request: NextRequest) {
       originalPrompt: prompt,
       aiModel: settings.aiModel,
       createdBy: user.userId,
+      updatedBy: user.userId,
       status: 'draft',
     });
 

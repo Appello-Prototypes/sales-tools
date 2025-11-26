@@ -21,44 +21,62 @@ export async function GET(
       );
     }
 
-    // Fetch deals associated with the company
-    const url = `https://api.hubapi.com/crm/v4/objects/deals/search`;
+    // Step 1: Get associated deal IDs
+    const assocUrl = `https://api.hubapi.com/crm/v3/objects/companies/${companyId}/associations/deals`;
     
-    const response = await fetch(url, {
+    const assocResponse = await fetch(assocUrl, {
+      headers: {
+        'Authorization': `Bearer ${hubspotApiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!assocResponse.ok) {
+      const errorText = await assocResponse.text();
+      console.error('HubSpot Associations API Error:', assocResponse.status, errorText);
+      // Return empty if no associations found
+      if (assocResponse.status === 404) {
+        return NextResponse.json({ deals: [] });
+      }
+      return NextResponse.json(
+        { error: `HubSpot API error: ${assocResponse.status}`, details: errorText },
+        { status: assocResponse.status }
+      );
+    }
+
+    const assocData = await assocResponse.json();
+    const dealIds = assocData.results?.map((r: any) => r.id) || [];
+
+    if (dealIds.length === 0) {
+      return NextResponse.json({ deals: [] });
+    }
+
+    // Step 2: Batch read deal details
+    const batchUrl = `https://api.hubapi.com/crm/v3/objects/deals/batch/read`;
+    const batchResponse = await fetch(batchUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${hubspotApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        filterGroups: [
-          {
-            filters: [
-              {
-                propertyName: 'associatedcompanyid',
-                operator: 'EQ',
-                value: companyId,
-              },
-            ],
-          },
-        ],
+        inputs: dealIds.map((id: string) => ({ id })),
         properties: ['dealname', 'dealstage', 'amount', 'closedate', 'pipeline'],
-        limit: 100,
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('HubSpot API Error:', response.status, errorText);
+    if (!batchResponse.ok) {
+      const errorText = await batchResponse.text();
+      console.error('HubSpot Batch API Error:', batchResponse.status, errorText);
       return NextResponse.json(
-        { error: `HubSpot API error: ${response.status}`, details: errorText },
-        { status: response.status }
+        { error: `HubSpot API error: ${batchResponse.status}`, details: errorText },
+        { status: batchResponse.status }
       );
     }
 
-    const data = await response.json();
+    const batchData = await batchResponse.json();
     
-    const deals = data.results?.map((deal: any) => ({
+    const deals = batchData.results?.map((deal: any) => ({
       id: deal.id,
       name: deal.properties.dealname || 'Unnamed Deal',
       stage: deal.properties.dealstage || '',
