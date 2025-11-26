@@ -489,9 +489,9 @@ export default function AssessmentFormPage() {
                                 </p>
                               )}
                               
-                              {q.min !== undefined && q.max !== undefined && (
+                              {'min' in q && 'max' in q && (q as any).min !== undefined && (q as any).max !== undefined && (
                                 <p className="text-xs text-muted-foreground mt-2">
-                                  <strong>Range:</strong> {q.min} - {q.max}
+                                  <strong>Range:</strong> {(q as any).min} - {(q as any).max}
                                 </p>
                               )}
                             </div>
