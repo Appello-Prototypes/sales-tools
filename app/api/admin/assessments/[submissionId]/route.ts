@@ -42,11 +42,11 @@ export async function GET(
       report = (assessment as any).customerReport;
       // Calculate ROI and score for display (they're in the reports)
       const data = {
-        section1: assessment.section1,
-        section2: assessment.section2,
-        section3: assessment.section3,
-        section4: assessment.section4,
-        section5: assessment.section5,
+        section1: (assessment as any).section1,
+        section2: (assessment as any).section2,
+        section3: (assessment as any).section3,
+        section4: (assessment as any).section4,
+        section5: (assessment as any).section5,
       };
       roi = calculateROI(data);
       score = await calculateOpportunityScore(data);
@@ -54,11 +54,11 @@ export async function GET(
     } else {
       // Fallback: calculate if reports not saved yet
       const data = {
-        section1: assessment.section1,
-        section2: assessment.section2,
-        section3: assessment.section3,
-        section4: assessment.section4,
-        section5: assessment.section5,
+        section1: (assessment as any).section1,
+        section2: (assessment as any).section2,
+        section3: (assessment as any).section3,
+        section4: (assessment as any).section4,
+        section5: (assessment as any).section5,
       };
       
       roi = calculateROI(data);
@@ -71,8 +71,8 @@ export async function GET(
       assessment: {
         ...assessment,
         // Ensure debugLog and auditTrail are included
-        debugLog: assessment.debugLog || null,
-        auditTrail: assessment.auditTrail || null,
+        debugLog: (assessment as any).debugLog || null,
+        auditTrail: (assessment as any).auditTrail || null,
         adminReport: (assessment as any).adminReport || null,
         customerReport: (assessment as any).customerReport || null,
         customerReportGeneratedAt: (assessment as any).customerReportGeneratedAt || null,
