@@ -483,9 +483,9 @@ export default function AssessmentFormPage() {
                                 </div>
                               )}
                               
-                              {q.maxSelections && (
+                              {'maxSelections' in q && (q as any).maxSelections && (
                                 <p className="text-xs text-muted-foreground mt-2">
-                                  <strong>Max selections:</strong> {q.maxSelections}
+                                  <strong>Max selections:</strong> {(q as any).maxSelections}
                                 </p>
                               )}
                               
