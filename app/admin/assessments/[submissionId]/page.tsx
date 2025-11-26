@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, TrendingUp, DollarSign, Clock, Target, CheckCircle2, Star, FileText, Settings, Users, Calendar, Bug, Activity } from 'lucide-react';
+import { ArrowLeft, TrendingUp, DollarSign, Clock, Target, CheckCircle2, Star, FileText, Settings, Users, Calendar, Bug, Activity, AlertCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AssessmentDetailPage() {
