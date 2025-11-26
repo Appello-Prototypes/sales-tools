@@ -128,23 +128,23 @@ export async function POST(
       
       const companyResearch = await researchCompany(
         {
-          companyName: assessment.companyName || assessment.name,
-          website: assessment.website,
-          email: assessment.email,
-          submissionId: assessment.submissionId,
+          companyName: (assessment as any).companyName || (assessment as any).name,
+          website: (assessment as any).website,
+          email: (assessment as any).email,
+          submissionId: (assessment as any).submissionId,
           ...data,
-        },
+        } as any,
         researchAuditTrail
       );
       
       // Merge research audit trail into main audit trail
       if (auditTrail && researchAuditTrail) {
-        auditTrail.actions.push(...researchAuditTrail.actions);
-        auditTrail.totalActions += researchAuditTrail.totalActions;
-        auditTrail.totalClaudeQueries += researchAuditTrail.totalClaudeQueries;
-        auditTrail.totalAtlasQueries += researchAuditTrail.totalAtlasQueries;
-        auditTrail.totalFirecrawlActions += researchAuditTrail.totalFirecrawlActions;
-        auditTrail.totalErrors += researchAuditTrail.totalErrors;
+        (auditTrail as any).actions.push(...(researchAuditTrail as any).actions);
+        (auditTrail as any).totalActions += (researchAuditTrail as any).totalActions;
+        (auditTrail as any).totalClaudeQueries += (researchAuditTrail as any).totalClaudeQueries;
+        (auditTrail as any).totalAtlasQueries += (researchAuditTrail as any).totalAtlasQueries;
+        (auditTrail as any).totalFirecrawlActions += (researchAuditTrail as any).totalFirecrawlActions;
+        (auditTrail as any).totalErrors += (researchAuditTrail as any).totalErrors;
       }
       
       logAI(submissionId, 'Company research completed', {
@@ -182,8 +182,8 @@ export async function POST(
       const adminDerivation = deriveAdminReport(adminReport, companyResearch, auditTrail);
       
       // Attach derivations to reports
-      enhancedCustomerReport._derivation = customerDerivation;
-      adminReport._derivation = adminDerivation;
+      (enhancedCustomerReport as any)._derivation = customerDerivation;
+      (adminReport as any)._derivation = adminDerivation;
       
       // Finalize debug log before saving
       finalizeDebugLog(submissionId);

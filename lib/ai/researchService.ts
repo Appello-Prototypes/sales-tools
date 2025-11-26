@@ -144,7 +144,7 @@ export async function researchCompany(
         addAuditEntry(researchAuditTrail, {
           action: 'Company Web Research',
           type: 'firecrawl_search',
-          details: { query: searchQuery },
+          details: { query: searchQuery } as any,
         });
         
         logCallback?.('info', `   → Calling Firecrawl MCP: searchWithFirecrawl`);
@@ -189,7 +189,7 @@ export async function researchCompany(
       addAuditEntry(researchAuditTrail, {
         action: 'Company Web Research Error',
         type: 'error',
-        details: { error: error.message },
+        details: { error: error.message } as any as any,
       });
     }
   }
@@ -209,7 +209,7 @@ export async function researchCompany(
         addAuditEntry(researchAuditTrail, {
           action: 'Competitor Research Error',
           type: 'error',
-          details: { error: error.message },
+          details: { error: error.message } as any,
         });
         return { type: 'competitors', data: [] };
       }
@@ -226,7 +226,7 @@ export async function researchCompany(
         addAuditEntry(researchAuditTrail, {
           action: 'Industry Research Error',
           type: 'error',
-          details: { error: error.message },
+          details: { error: error.message } as any,
         });
         return { type: 'industry', data: undefined };
       }
@@ -242,7 +242,7 @@ export async function researchCompany(
         addAuditEntry(researchAuditTrail, {
           action: 'Tools Research Error',
           type: 'error',
-          details: { error: error.message },
+          details: { error: error.message } as any,
         });
         return { type: 'tools', data: undefined };
       }
@@ -260,7 +260,7 @@ export async function researchCompany(
         addAuditEntry(researchAuditTrail, {
           action: 'ATLAS Research Error',
           type: 'error',
-          details: { error: error.message },
+          details: { error: error.message } as any,
         });
         return { type: 'atlas', data: undefined };
       }
@@ -310,7 +310,7 @@ async function analyzeCompanyWebsite(
     addAuditEntry(auditTrail, {
       action: 'Website Analysis',
       type: 'firecrawl_scrape',
-      details: { url },
+      details: { url } as any,
     });
     
     logCallback?.('info', `   → Scraping ${url}...`);
@@ -345,7 +345,7 @@ async function analyzeCompanyWebsite(
     addAuditEntry(auditTrail, {
       action: 'Website Analysis Error',
       type: 'error',
-      details: { error: error.message },
+      details: { error: error.message } as any,
     });
     return undefined;
   }
@@ -444,7 +444,7 @@ Return JSON format:
     addAuditEntry(auditTrail, {
       action: 'Website Analysis Error',
       type: 'error',
-      details: { error: error.message },
+      details: { error: error.message } as any,
     });
     return undefined;
   }
@@ -508,7 +508,7 @@ async function researchCompetitors(
   addAuditEntry(auditTrail, {
     action: 'Competitor Research',
     type: 'firecrawl_search',
-    details: { query: searchQuery },
+    details: { query: searchQuery } as any,
   });
   
   try {
@@ -602,7 +602,7 @@ Return JSON array:
     addAuditEntry(auditTrail, {
       action: 'Competitor Research Error',
       type: 'error',
-      details: { error: error.message },
+      details: { error: error.message } as any,
     });
     return [];
   }
@@ -624,7 +624,7 @@ async function researchIndustry(
   addAuditEntry(auditTrail, {
     action: 'Industry Research',
     type: 'firecrawl_search',
-    details: { query: searchQuery },
+    details: { query: searchQuery } as any,
   });
   
   try {
@@ -801,7 +801,7 @@ async function researchATLAS(
       addAuditEntry(auditTrail, {
         action: 'ATLAS Query',
         type: 'atlas_query',
-        details: { query },
+        details: { query } as any,
       });
       
       const atlasResult = await queryATLAS(query, auditTrail, logCallback);
@@ -822,7 +822,7 @@ async function researchATLAS(
       addAuditEntry(auditTrail, {
         action: 'ATLAS Query Error',
         type: 'error',
-        details: { error: error.message, query },
+        details: { error: error.message, query } as any,
       });
       return [];
     }
@@ -847,7 +847,7 @@ async function researchATLAS(
     relevantExamples: results.slice(0, 10),
     insights: detailedInsights,
     rawData: results, // Keep raw data for deeper analysis
-  };
+  } as any;
 }
 
 /**

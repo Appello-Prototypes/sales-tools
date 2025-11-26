@@ -293,7 +293,7 @@ export async function queryATLAS(
             description: `ATLAS MCP query: ${query}`,
             dataSummary: `${resultCount} results returned`,
           }],
-        },
+        } as any,
       });
     }
     
@@ -316,7 +316,7 @@ export async function queryATLAS(
             success: false,
             error: error.message,
           },
-        },
+        } as any,
       });
     }
     
@@ -367,7 +367,7 @@ async function queryATLASFallback(query: string, auditTrail?: AuditTrail): Promi
             success: true,
             summary: `Found ${result.results?.length || 0} results`,
           },
-        },
+        } as any,
       });
     }
     

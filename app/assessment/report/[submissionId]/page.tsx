@@ -183,13 +183,13 @@ export default function ReportPage() {
                   <span className="text-sm">Time Lost</span>
                 </div>
                 <p className="text-3xl font-bold text-red-900">
-                  {report.timeCost.hoursPerWeek} hrs/week
+                  {(report as any).timeCost.hoursPerWeek} hrs/week
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {report.timeCost.hoursPerYear.toLocaleString()} hours annually
+                  {(report as any).timeCost.hoursPerYear.toLocaleString()} hours annually
                 </p>
                 <p className="text-lg font-semibold text-red-900">
-                  ${report.timeCost.costPerYear.toLocaleString()}/year in lost productivity
+                  ${(report as any).timeCost.costPerYear.toLocaleString()}/year in lost productivity
                 </p>
               </div>
 
@@ -199,17 +199,17 @@ export default function ReportPage() {
                   <span className="text-sm">Money Lost</span>
                 </div>
                 <p className="text-3xl font-bold text-red-900">
-                  ${(report.moneyCost.total / 1000).toFixed(0)}K/year
+                  ${((report as any).moneyCost.total / 1000).toFixed(0)}K/year
                 </p>
                 <div className="text-sm space-y-1">
-                  {report.moneyCost.profitMarginLoss > 0 && (
-                    <p>• ${(report.moneyCost.profitMarginLoss / 1000).toFixed(0)}K from margin erosion</p>
+                  {(report as any).moneyCost.profitMarginLoss > 0 && (
+                    <p>• ${((report as any).moneyCost.profitMarginLoss / 1000).toFixed(0)}K from margin erosion</p>
                   )}
-                  {report.moneyCost.changeOrderLoss > 0 && (
-                    <p>• ${(report.moneyCost.changeOrderLoss / 1000).toFixed(0)}K from missed change orders</p>
+                  {(report as any).moneyCost.changeOrderLoss > 0 && (
+                    <p>• ${((report as any).moneyCost.changeOrderLoss / 1000).toFixed(0)}K from missed change orders</p>
                   )}
-                  {report.moneyCost.complianceCosts > 0 && (
-                    <p>• ${(report.moneyCost.complianceCosts / 1000).toFixed(0)}K in compliance costs</p>
+                  {(report as any).moneyCost.complianceCosts > 0 && (
+                    <p>• ${((report as any).moneyCost.complianceCosts / 1000).toFixed(0)}K in compliance costs</p>
                   )}
                 </div>
               </div>
@@ -237,7 +237,7 @@ export default function ReportPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {report.appelloSolutions.map((solution: any, index: number) => (
+              {(report as any).appelloSolutions.map((solution: any, index: number) => (
                 <div key={index} className="p-4 bg-white rounded-lg border border-green-200">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -271,7 +271,7 @@ export default function ReportPage() {
             <div className="grid md:grid-cols-3 gap-6">
               <div className="text-center p-4 bg-white rounded-lg">
                 <p className="text-sm text-muted-foreground mb-2">Appello Investment</p>
-                <p className="text-2xl font-bold">${(report.appelloInvestment / 1000).toFixed(0)}K</p>
+                <p className="text-2xl font-bold">${((report as any).appelloInvestment / 1000).toFixed(0)}K</p>
                 <p className="text-xs text-muted-foreground mt-1">first year</p>
               </div>
               <div className="text-center p-4 bg-white rounded-lg">
@@ -284,7 +284,7 @@ export default function ReportPage() {
               <div className="text-center p-4 bg-white rounded-lg">
                 <p className="text-sm text-muted-foreground mb-2">Net Value</p>
                 <p className="text-2xl font-bold text-primary">
-                  ${(report.netValue / 1000).toFixed(0)}K
+                  ${((report as any).netValue / 1000).toFixed(0)}K
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">per year</p>
               </div>
@@ -308,7 +308,7 @@ export default function ReportPage() {
         </Card>
 
         {/* AI-Enhanced: Industry Benchmarks */}
-        {report.industryBenchmarks && (
+        {(report as any).industryBenchmarks && (
           <Card className="border-l-4 border-l-blue-500">
             <CardHeader>
               <CardTitle className="text-2xl flex items-center gap-2">
@@ -319,22 +319,22 @@ export default function ReportPage() {
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">
-                {report.industryBenchmarks.fieldWorkersPercentile && (
+                {(report as any).industryBenchmarks.fieldWorkersPercentile && (
                   <div className="p-4 bg-blue-50 rounded-lg">
                     <p className="text-sm text-muted-foreground mb-1">Company Size</p>
-                    <p className="font-semibold">{report.industryBenchmarks.fieldWorkersPercentile}</p>
+                    <p className="font-semibold">{(report as any).industryBenchmarks.fieldWorkersPercentile}</p>
                   </div>
                 )}
-                {report.industryBenchmarks.typicalROI && (
+                {(report as any).industryBenchmarks.typicalROI && (
                   <div className="p-4 bg-green-50 rounded-lg">
                     <p className="text-sm text-muted-foreground mb-1">Typical ROI</p>
-                    <p className="font-semibold">{report.industryBenchmarks.typicalROI}</p>
+                    <p className="font-semibold">{(report as any).industryBenchmarks.typicalROI}</p>
                   </div>
                 )}
-                {report.industryBenchmarks.averageSavings && (
+                {(report as any).industryBenchmarks.averageSavings && (
                   <div className="p-4 bg-purple-50 rounded-lg">
                     <p className="text-sm text-muted-foreground mb-1">Average Savings</p>
-                    <p className="font-semibold">{report.industryBenchmarks.averageSavings}</p>
+                    <p className="font-semibold">{(report as any).industryBenchmarks.averageSavings}</p>
                   </div>
                 )}
               </div>
@@ -343,29 +343,29 @@ export default function ReportPage() {
         )}
 
         {/* AI-Enhanced: Peer Comparison */}
-        {report.peerComparison && (
+        {(report as any).peerComparison && (
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">Peer Comparison</CardTitle>
               <CardDescription>
-                Based on {report.peerComparison.similarCompaniesCount || 0} similar companies
+                Based on {(report as any).peerComparison.similarCompaniesCount || 0} similar companies
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {report.peerComparison.averageROI && (
+                {(report as any).peerComparison.averageROI && (
                   <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
                     <span className="text-muted-foreground">Average ROI for Similar Companies</span>
                     <span className="text-2xl font-bold text-primary">
-                      {report.peerComparison.averageROI}%
+                      {(report as any).peerComparison.averageROI}%
                     </span>
                   </div>
                 )}
-                {report.peerComparison.commonOutcomes && report.peerComparison.commonOutcomes.length > 0 && (
+                {(report as any).peerComparison.commonOutcomes && (report as any).peerComparison.commonOutcomes.length > 0 && (
                   <div>
                     <p className="font-semibold mb-2">Common Outcomes:</p>
                     <ul className="space-y-1">
-                      {report.peerComparison.commonOutcomes.map((outcome, index) => (
+                      {(report as any).peerComparison.commonOutcomes.map((outcome, index) => (
                         <li key={index} className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-green-500" />
                           <span>{outcome}</span>
@@ -380,7 +380,7 @@ export default function ReportPage() {
         )}
 
         {/* AI-Enhanced: Success Stories */}
-        {report.successStories && report.successStories.length > 0 && (
+        {(report as any).successStories && (report as any).successStories.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">Success Stories</CardTitle>
@@ -388,7 +388,7 @@ export default function ReportPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {report.successStories.map((story, index) => (
+                {(report as any).successStories.map((story, index) => (
                   <div key={index} className="p-4 border rounded-lg">
                     <p className="font-semibold text-primary mb-2">{story.companyProfile}</p>
                     <div className="space-y-2 text-sm">
@@ -445,7 +445,7 @@ export default function ReportPage() {
                   <span className="text-xl">❌</span> Today
                 </h3>
                 <ul className="space-y-2">
-                  {report.vision.before.map((item: string, index: number) => (
+                  {(report as any).vision.before.map((item: string, index: number) => (
                     <li key={index} className="flex items-start gap-2 text-sm">
                       <span className="text-red-500 mt-1">•</span>
                       <span>{item}</span>
@@ -459,7 +459,7 @@ export default function ReportPage() {
                   With Appello
                 </h3>
                 <ul className="space-y-2">
-                  {report.vision.after.map((item: string, index: number) => (
+                  {(report as any).vision.after.map((item: string, index: number) => (
                     <li key={index} className="flex items-start gap-2 text-sm">
                       <span className="text-green-500 mt-1">✓</span>
                       <span>{item}</span>
@@ -471,28 +471,28 @@ export default function ReportPage() {
 
             <div className="pt-4 border-t">
               <p className="text-lg font-semibold text-center">
-                {report.vision.impact}
+                {(report as any).vision.impact}
               </p>
             </div>
           </CardContent>
         </Card>
 
         {/* Next Steps */}
-        <Card className={report.nextSteps ? "border-2 border-primary" : ""}>
+        <Card className={(report as any).nextSteps ? "border-2 border-primary" : ""}>
           <CardHeader>
             <CardTitle>Next Steps</CardTitle>
             <CardDescription>
-              {report.nextSteps ? "Personalized action plan based on your assessment" : "Your personalized demo will focus on:"}
+              {(report as any).nextSteps ? "Personalized action plan based on your assessment" : "Your personalized demo will focus on:"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {report.nextSteps ? (
+            {(report as any).nextSteps ? (
               <div className="space-y-6">
-                {report.nextSteps.immediateActions && report.nextSteps.immediateActions.length > 0 && (
+                {(report as any).nextSteps.immediateActions && (report as any).nextSteps.immediateActions.length > 0 && (
                   <div>
                     <p className="font-semibold mb-3">Immediate Actions:</p>
                     <ul className="space-y-2">
-                      {report.nextSteps.immediateActions.map((action, index) => (
+                      {(report as any).nextSteps.immediateActions.map((action, index) => (
                         <li key={index} className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-primary" />
                           <span>{action}</span>
@@ -501,17 +501,17 @@ export default function ReportPage() {
                     </ul>
                   </div>
                 )}
-                {report.nextSteps.timelineGuidance && (
+                {(report as any).nextSteps.timelineGuidance && (
                   <div className="p-4 bg-primary/10 rounded-lg">
                     <p className="font-semibold mb-2">Timeline Guidance:</p>
-                    <p>{report.nextSteps.timelineGuidance}</p>
+                    <p>{(report as any).nextSteps.timelineGuidance}</p>
                   </div>
                 )}
-                {report.recommendedDemoFocus && report.recommendedDemoFocus.length > 0 && (
+                {(report as any).recommendedDemoFocus && (report as any).recommendedDemoFocus.length > 0 && (
                   <div>
                     <p className="font-semibold mb-2">Demo Focus Areas:</p>
                     <ul className="space-y-2">
-                      {report.recommendedDemoFocus.map((focus: string, index: number) => (
+                      {(report as any).recommendedDemoFocus.map((focus: string, index: number) => (
                         <li key={index} className="flex items-start gap-2">
                           <span className="text-primary mt-1">→</span>
                           <span>{focus}</span>
@@ -523,7 +523,7 @@ export default function ReportPage() {
               </div>
             ) : (
               <ul className="space-y-2">
-                {report.recommendedDemoFocus.map((focus: string, index: number) => (
+                {(report as any).recommendedDemoFocus.map((focus: string, index: number) => (
                   <li key={index} className="flex items-start gap-2">
                     <span className="text-primary mt-1">→</span>
                     <span>{focus}</span>

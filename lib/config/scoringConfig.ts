@@ -73,7 +73,7 @@ export async function getScoringConfig(): Promise<ScoringConfig> {
     const { default: AssessmentConfig } = await import('../../models/AssessmentConfig');
     
     await connectDB();
-    const dbConfig = await AssessmentConfig.findOne({ type: 'scoring' }).lean();
+    const dbConfig: any = await (AssessmentConfig as any).findOne({ type: 'scoring' }).lean();
     
     if (dbConfig && dbConfig.config) {
       return {
@@ -101,7 +101,7 @@ export async function saveScoringConfig(config: ScoringConfig): Promise<void> {
     const { default: AssessmentConfig } = await import('../../models/AssessmentConfig');
     
     await connectDB();
-    await AssessmentConfig.findOneAndUpdate(
+    await (AssessmentConfig as any).findOneAndUpdate(
       { type: 'scoring' },
       {
         type: 'scoring',

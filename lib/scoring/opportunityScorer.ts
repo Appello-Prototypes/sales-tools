@@ -78,8 +78,8 @@ export async function calculateOpportunityScore(data: AssessmentData): Promise<O
     budgetIndicators: Math.round((rawScores.budgetIndicators / maxPossibleScores.budgetIndicators) * weights.budgetIndicators),
   };
 
-  const totalScore = Object.values(breakdown).reduce((sum, score) => sum + score, 0);
-  const maxScore = Object.values(weights).reduce((sum, w) => sum + w, 0);
+  const totalScore: number = Object.values(breakdown).reduce((sum: number, score: any) => sum + score, 0) as number;
+  const maxScore: number = Object.values(weights).reduce((sum: number, w: any) => sum + w, 0) as number;
   const percentage = Math.round((totalScore / maxScore) * 100);
   const grade = getGrade(percentage, config.gradeThresholds);
   const priority = getPriority(totalScore, config.priorityThresholds);

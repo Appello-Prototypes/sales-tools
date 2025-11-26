@@ -28,7 +28,7 @@ async function checkDatabase() {
     } else {
       // Get sample assessments
       console.log('3. Fetching sample assessments...');
-      const sampleAssessments = await Assessment.find({})
+      const sampleAssessments: any = await (Assessment as any).find({})
         .sort({ createdAt: -1 })
         .limit(5)
         .lean();

@@ -212,7 +212,7 @@ export async function scrapeWithFirecrawl(
               error,
               status: response.status,
             },
-          },
+          } as any,
         });
       }
       
@@ -403,7 +403,7 @@ export async function searchWithFirecrawl(
               error,
               status: response.status,
             },
-          },
+          } as any,
         });
       }
       

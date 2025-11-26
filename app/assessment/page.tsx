@@ -26,7 +26,7 @@ export default function AssessmentPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionMessage, setTransitionMessage] = useState('');
-  const formRef = useRef<HTMLFormElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   // Define saveProgress first
   const saveProgress = useCallback(async (step: number, sectionData: any) => {
