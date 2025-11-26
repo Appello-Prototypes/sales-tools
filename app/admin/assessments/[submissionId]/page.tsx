@@ -65,8 +65,8 @@ export default function AssessmentDetailPage() {
   const { assessment, roi, score, report, featureAnalysis } = data;
   
   // Get saved reports if available
-  const customerReport = assessment.customerReport || report;
-  const adminReport = assessment.adminReport;
+  const customerReport = (assessment as any).customerReport || report;
+  const adminReport = (assessment as any).adminReport;
   const customerDerivation = customerReport?._derivation;
   const adminDerivation = adminReport?._derivation;
 

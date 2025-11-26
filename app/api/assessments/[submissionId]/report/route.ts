@@ -32,7 +32,7 @@ export async function GET(
     }
     
     // If customer report already exists, return it immediately
-    if (assessment.customerReport && assessment.customerReportGeneratedAt) {
+    if ((assessment as any).customerReport && (assessment as any).customerReportGeneratedAt) {
       // Calculate ROI and score for the response (needed for display)
       const data = {
         submissionId: assessment.submissionId,
@@ -47,7 +47,7 @@ export async function GET(
       const score = await calculateOpportunityScore(data);
       
       return NextResponse.json({
-        report: assessment.customerReport,
+        report: (assessment as any).customerReport,
         roi,
         score,
         auditTrail: assessment.auditTrail || undefined,

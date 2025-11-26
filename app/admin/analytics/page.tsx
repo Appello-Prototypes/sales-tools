@@ -281,7 +281,7 @@ export default function AdminAnalytics() {
                 {scoringConfig && (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {Object.entries(scoringConfig.weights).map(([key, value]) => (
+                      {Object.entries(scoringConfig.weights).map(([key, value]: [string, number]) => (
                         <div key={key} className="space-y-2">
                           <Label htmlFor={key} className="capitalize">
                             {key.replace(/([A-Z])/g, ' $1').trim()}
@@ -333,7 +333,7 @@ export default function AdminAnalytics() {
               <CardContent>
                 {scoringConfig && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {Object.entries(scoringConfig.gradeThresholds).map(([grade, threshold]) => (
+                    {Object.entries(scoringConfig.gradeThresholds).map(([grade, threshold]: [string, number]) => (
                       <div key={grade} className="space-y-2">
                         <Label>{grade}</Label>
                         <Input
@@ -365,7 +365,7 @@ export default function AdminAnalytics() {
               <CardContent>
                 {scoringConfig && (
                   <div className="grid grid-cols-3 gap-4">
-                    {Object.entries(scoringConfig.priorityThresholds).map(([priority, threshold]) => (
+                    {Object.entries(scoringConfig.priorityThresholds).map(([priority, threshold]: [string, number]) => (
                       <div key={priority} className="space-y-2">
                         <Label>{priority}</Label>
                         <Input

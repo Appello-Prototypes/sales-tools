@@ -417,7 +417,7 @@ export default function ReportPage() {
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
-                {report.personalizedInsights.map((insightItem, index) => {
+                {report.personalizedInsights.map((insightItem: any, index: number) => {
                   // Handle both string and object formats
                   const insight = typeof insightItem === 'string' ? insightItem : insightItem.insight || insightItem;
                   return (

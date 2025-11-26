@@ -560,7 +560,7 @@ export default function SubmissionsPage() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      sortedAndFilteredAssessments.map((assessment) => (
+                      sortedAndFilteredAssessments.map((assessment: any) => (
                         <TableRow 
                           key={assessment._id} 
                           className={assessment.flagged ? 'bg-yellow-50' : selectedAssessments.has(assessment.submissionId) ? 'bg-blue-50' : ''}

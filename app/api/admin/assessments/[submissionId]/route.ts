@@ -73,9 +73,9 @@ export async function GET(
         // Ensure debugLog and auditTrail are included
         debugLog: assessment.debugLog || null,
         auditTrail: assessment.auditTrail || null,
-        adminReport: assessment.adminReport || null,
-        customerReport: assessment.customerReport || null,
-        customerReportGeneratedAt: assessment.customerReportGeneratedAt || null,
+        adminReport: (assessment as any).adminReport || null,
+        customerReport: (assessment as any).customerReport || null,
+        customerReportGeneratedAt: (assessment as any).customerReportGeneratedAt || null,
       },
       roi,
       score,

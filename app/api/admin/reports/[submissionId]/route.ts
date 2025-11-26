@@ -30,7 +30,7 @@ export async function GET(
       );
     }
     
-    if (!assessment.adminReport) {
+    if (!(assessment as any).adminReport) {
       return NextResponse.json(
         { error: 'Admin report not yet generated. Please wait a moment and try again.' },
         { status: 404 }
@@ -39,7 +39,7 @@ export async function GET(
     
     return NextResponse.json({
       report: {
-        adminReport: assessment.adminReport,
+        adminReport: (assessment as any).adminReport,
         assessment: {
           submissionId: assessment.submissionId,
           name: assessment.name,
