@@ -497,12 +497,12 @@ export default function AssessmentFormPage() {
                             </div>
 
                             {/* Conditional Questions */}
-                            {q.conditional && (
+                            {'conditional' in q && (q as any).conditional && (
                               <div className="mt-4 ml-4 pl-4 border-l-2 border-gray-300">
                                 <p className="text-xs font-semibold text-muted-foreground mb-2">
-                                  Conditional (if "{q.conditional.if}"):
+                                  Conditional (if "{(q as any).conditional.if}"):
                                 </p>
-                                {q.conditional.questions.map((cq, cqIndex) => (
+                                {(q as any).conditional.questions.map((cq: any, cqIndex: number) => (
                                   <div key={cqIndex} className="mb-4">
                                     <Badge variant="outline" className="text-xs mb-1">
                                       Q{cq.number}
