@@ -9,13 +9,20 @@ import Anthropic from '@anthropic-ai/sdk';
 import { ANTHROPIC_API_KEY } from '@/lib/config';
 import { AuditTrail, addAuditEntry } from './auditTrail';
 
-if (!ANTHROPIC_API_KEY) {
-  throw new Error('ANTHROPIC_API_KEY is required. Please set it in .env.local');
-}
+// Lazy initialization - only create client when actually used
+let anthropic: Anthropic | null = null;
 
-const anthropic = new Anthropic({
-  apiKey: ANTHROPIC_API_KEY,
-});
+function getAnthropicClient(): Anthropic {
+  if (!anthropic) {
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY is required. Please set it in .env.local');
+    }
+    anthropic = new Anthropic({
+      apiKey: ANTHROPIC_API_KEY,
+    });
+  }
+  return anthropic;
+}
 
 export interface ClaudeMessage {
   role: 'user' | 'assistant';
@@ -87,7 +94,7 @@ export async function chatWithClaude(
       };
     }
 
-    const response = await anthropic.messages.create(requestParams);
+    const response = await getAnthropicClient().messages.create(requestParams);
     const duration = Date.now() - startTime;
 
     // Extract text content from response
