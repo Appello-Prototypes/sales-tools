@@ -5,10 +5,6 @@ const nextConfig: NextConfig = {
     // Skip type checking on build for prototype - types are checked in IDE
     ignoreBuildErrors: true,
   },
-  eslint: {
-    // Skip ESLint on build for prototype
-    ignoreDuringBuilds: true,
-  },
   /* config options here */
 };
 
