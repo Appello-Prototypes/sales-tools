@@ -79,7 +79,7 @@ export async function getScoringConfig(): Promise<ScoringConfig> {
       return {
         ...DEFAULT_SCORING_CONFIG,
         ...dbConfig.config,
-        customPrompts: dbConfig.customPrompts || {},
+        customPrompts: (dbConfig as any).customPrompts || {},
       };
     }
   } catch (error) {

@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const { config, customPrompts } = body;
     
     // Validate weights total 100
-    const totalWeight = Object.values(config.weights).reduce((sum: number, w: number) => sum + w, 0);
+    const totalWeight = (Object.values(config.weights) as number[]).reduce((sum: number, w: number) => sum + w, 0);
     if (totalWeight !== 100) {
       return NextResponse.json(
         { error: `Total weights must equal 100, got ${totalWeight}` },
