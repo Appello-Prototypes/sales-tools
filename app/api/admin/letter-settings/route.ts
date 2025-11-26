@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     }
 
     await connectDB();
-    let settings = await LetterSettings.findOne({ settingsType: 'default' });
+    let settings: any = await (LetterSettings as any).findOne({ settingsType: 'default' });
 
     if (!settings) {
       // Create default settings
@@ -184,7 +184,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { aiModel, maxTokens, temperature, systemPrompt, userPromptTemplate, approvedSamples } = body;
 
-    let settings = await LetterSettings.findOne({ settingsType: 'default' });
+    let settings: any = await (LetterSettings as any).findOne({ settingsType: 'default' });
 
     if (!settings) {
       settings = await (LetterSettings as any).create({
