@@ -870,7 +870,7 @@ export default function AssessmentDetailPage() {
                     <div>
                       <h4 className="font-semibold mb-2">Generation Steps</h4>
                       <div className="space-y-2">
-                        {customerDerivation.steps.map((step) => (
+                        {customerDerivation.steps.map((step: any) => (
                           <div key={step.step} className="p-3 border rounded-lg">
                             <div className="flex items-start justify-between mb-1">
                               <div className="flex items-center gap-2">
@@ -904,7 +904,7 @@ export default function AssessmentDetailPage() {
                         <p className="text-sm font-medium mb-2">Formula:</p>
                         <code className="text-xs">{customerDerivation.calculations.roi?.formula}</code>
                         <div className="mt-3 space-y-1 text-xs">
-                          {Object.entries(customerDerivation.calculations.roi?.inputs || {}).map(([key, value]) => (
+                          {Object.entries(customerDerivation.calculations.roi?.inputs || {}).map(([key, value]: [string, any]) => (
                             <div key={key}>
                               <span className="font-medium">{key}:</span> {typeof value === 'number' ? `$${value.toLocaleString()}` : String(value)}
                             </div>
@@ -921,7 +921,7 @@ export default function AssessmentDetailPage() {
                         <p className="text-sm font-medium mb-2">Formula:</p>
                         <code className="text-xs">{customerDerivation.calculations.score?.formula}</code>
                         <div className="mt-3 space-y-1 text-xs">
-                          {Object.entries(customerDerivation.calculations.score?.breakdown || {}).map(([key, value]) => (
+                          {Object.entries(customerDerivation.calculations.score?.breakdown || {}).map(([key, value]: [string, any]) => (
                             <div key={key}>
                               <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span> {value} points
                             </div>
@@ -943,7 +943,7 @@ export default function AssessmentDetailPage() {
                     <div>
                       <h4 className="font-semibold mb-2">Data Sources Used</h4>
                       <ul className="list-disc list-inside space-y-1 text-sm">
-                        {customerDerivation.transparency.dataSourcesUsed.map((source, idx) => (
+                        {customerDerivation.transparency.dataSourcesUsed.map((source: string, idx: number) => (
                           <li key={idx}>{source}</li>
                         ))}
                       </ul>
@@ -951,7 +951,7 @@ export default function AssessmentDetailPage() {
                     <div>
                       <h4 className="font-semibold mb-2">Assumptions Made</h4>
                       <ul className="list-disc list-inside space-y-1 text-sm">
-                        {customerDerivation.transparency.assumptionsMade.map((assumption, idx) => (
+                        {customerDerivation.transparency.assumptionsMade.map((assumption: string, idx: number) => (
                           <li key={idx}>{assumption}</li>
                         ))}
                       </ul>
@@ -967,7 +967,7 @@ export default function AssessmentDetailPage() {
                     <div>
                       <h4 className="font-semibold mb-2">Research Steps</h4>
                       <div className="space-y-2">
-                        {adminDerivation.steps.map((step) => (
+                        {adminDerivation.steps.map((step: any) => (
                           <div key={step.step} className="p-3 border rounded-lg">
                             <div className="flex items-start justify-between mb-1">
                               <div className="flex items-center gap-2">
@@ -1002,7 +1002,7 @@ export default function AssessmentDetailPage() {
                     <div>
                       <h4 className="font-semibold mb-2">Data Sources Used</h4>
                       <ul className="list-disc list-inside space-y-1 text-sm">
-                        {adminDerivation.transparency.dataSourcesUsed.map((source, idx) => (
+                        {adminDerivation.transparency.dataSourcesUsed.map((source: string, idx: number) => (
                           <li key={idx}>{source}</li>
                         ))}
                       </ul>
@@ -1010,7 +1010,7 @@ export default function AssessmentDetailPage() {
                     <div>
                       <h4 className="font-semibold mb-2">Assumptions Made</h4>
                       <ul className="list-disc list-inside space-y-1 text-sm">
-                        {adminDerivation.transparency.assumptionsMade.map((assumption, idx) => (
+                        {adminDerivation.transparency.assumptionsMade.map((assumption: string, idx: number) => (
                           <li key={idx}>{assumption}</li>
                         ))}
                       </ul>
@@ -1019,7 +1019,7 @@ export default function AssessmentDetailPage() {
                       <div>
                         <h4 className="font-semibold mb-2">AI Queries Executed</h4>
                         <div className="space-y-2">
-                          {adminDerivation.aiQueries.map((query, idx) => (
+                          {adminDerivation.aiQueries.map((query: any, idx: number) => (
                             <div key={idx} className="p-3 border rounded-lg text-xs">
                               <div className="flex items-center gap-2 mb-1">
                                 <Badge variant="outline">{query.type.toUpperCase()}</Badge>
