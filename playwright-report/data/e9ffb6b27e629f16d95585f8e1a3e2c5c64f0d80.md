@@ -1,0 +1,112 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - heading "Appello Pre-Demo Assessment" [level=1] [ref=e5]
+      - paragraph [ref=e6]: Help us tailor your demo to focus on what matters most to your business
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]: Step 1 of 5
+        - generic [ref=e10]: 20% Complete
+      - progressbar [ref=e11]
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - generic [ref=e15]: "1"
+          - generic [ref=e16]: Company Basics
+        - generic [ref=e17]:
+          - generic [ref=e18]: "2"
+          - generic [ref=e19]: Pain Points
+        - generic [ref=e20]:
+          - generic [ref=e21]: "3"
+          - generic [ref=e22]: Current State
+        - generic [ref=e23]:
+          - generic [ref=e24]: "4"
+          - generic [ref=e25]: Demo Focus
+        - generic [ref=e26]:
+          - generic [ref=e27]: "5"
+          - generic [ref=e28]: Decision
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e33]: Section 1 • Step 1
+        - generic [ref=e34]: Company Basics
+        - generic [ref=e35]: Tell us about your company
+      - generic [ref=e37]:
+        - generic [ref=e38]:
+          - generic [ref=e39]: "Question 1: What is your primary trade/specialty? *"
+          - radiogroup [ref=e40]:
+            - generic [ref=e41]:
+              - radio "Mechanical Insulation" [checked] [active] [ref=e42]:
+                - img [ref=e43]
+              - radio [checked]
+              - generic [ref=e45] [cursor=pointer]: Mechanical Insulation
+            - generic [ref=e46]:
+              - radio "HVAC" [ref=e47]
+              - radio
+              - generic [ref=e48] [cursor=pointer]: HVAC
+            - generic [ref=e49]:
+              - radio "Plumbing" [ref=e50]
+              - radio
+              - generic [ref=e51] [cursor=pointer]: Plumbing
+            - generic [ref=e52]:
+              - radio "Electrical" [ref=e53]
+              - radio
+              - generic [ref=e54] [cursor=pointer]: Electrical
+            - generic [ref=e55]:
+              - radio "Fire Protection" [ref=e56]
+              - radio
+              - generic [ref=e57] [cursor=pointer]: Fire Protection
+            - generic [ref=e58]:
+              - radio "General Mechanical" [ref=e59]
+              - radio
+              - generic [ref=e60] [cursor=pointer]: General Mechanical
+            - generic [ref=e61]:
+              - radio "Other Other" [ref=e62]
+              - radio
+              - generic [ref=e63] [cursor=pointer]: Other
+        - generic [ref=e64]:
+          - generic [ref=e65]: "Question 2: How many field workers do you currently have? *"
+          - combobox [ref=e66]:
+            - generic: Select range
+            - img
+          - combobox [ref=e67]
+        - generic [ref=e68]:
+          - generic [ref=e69]: "Question 3: What is your role in the company? *"
+          - radiogroup [ref=e70]:
+            - generic [ref=e71]:
+              - radio "Owner/CEO" [ref=e72]
+              - radio
+              - generic [ref=e73] [cursor=pointer]: Owner/CEO
+            - generic [ref=e74]:
+              - radio "Operations Manager" [ref=e75]
+              - radio
+              - generic [ref=e76] [cursor=pointer]: Operations Manager
+            - generic [ref=e77]:
+              - radio "Project Manager" [ref=e78]
+              - radio
+              - generic [ref=e79] [cursor=pointer]: Project Manager
+            - generic [ref=e80]:
+              - radio "Office Administrator" [ref=e81]
+              - radio
+              - generic [ref=e82] [cursor=pointer]: Office Administrator
+            - generic [ref=e83]:
+              - radio "Estimator" [ref=e84]
+              - radio
+              - generic [ref=e85] [cursor=pointer]: Estimator
+            - generic [ref=e86]:
+              - radio [ref=e87]
+              - radio
+              - generic [ref=e88] [cursor=pointer]: Other
+        - button "Continue" [ref=e90]
+    - generic [ref=e91]:
+      - button "Previous" [disabled]:
+        - img
+        - text: Previous
+      - button "Next" [ref=e92]:
+        - text: Next
+        - img
+  - button "Open Next.js Dev Tools" [ref=e98] [cursor=pointer]:
+    - img [ref=e99]
+  - alert [ref=e102]
+```
