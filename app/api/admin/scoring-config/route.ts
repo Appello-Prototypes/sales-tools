@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({
       config,
-      customPrompts: dbConfig?.customPrompts || {},
+      customPrompts: (dbConfig as any)?.customPrompts || {},
     });
   } catch (error: any) {
     console.error('Error loading scoring config:', error);

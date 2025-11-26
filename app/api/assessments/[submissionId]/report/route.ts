@@ -24,7 +24,7 @@ export async function GET(
       );
     }
     
-    if (assessment.status !== 'completed') {
+    if ((assessment as any).status !== 'completed') {
       return NextResponse.json(
         { error: 'Assessment not completed' },
         { status: 400 }
@@ -35,13 +35,13 @@ export async function GET(
     if ((assessment as any).customerReport && (assessment as any).customerReportGeneratedAt) {
       // Calculate ROI and score for the response (needed for display)
       const data = {
-        submissionId: assessment.submissionId,
-        companyName: assessment.companyName,
-        section1: assessment.section1,
-        section2: assessment.section2,
-        section3: assessment.section3,
-        section4: assessment.section4,
-        section5: assessment.section5,
+        submissionId: (assessment as any).submissionId,
+        companyName: (assessment as any).companyName,
+        section1: (assessment as any).section1,
+        section2: (assessment as any).section2,
+        section3: (assessment as any).section3,
+        section4: (assessment as any).section4,
+        section5: (assessment as any).section5,
       };
       const roi = calculateROI(data);
       const score = await calculateOpportunityScore(data);
@@ -50,19 +50,19 @@ export async function GET(
         report: (assessment as any).customerReport,
         roi,
         score,
-        auditTrail: assessment.auditTrail || undefined,
+        auditTrail: (assessment as any).auditTrail || undefined,
       });
     }
     
     // Convert to AssessmentData format
     const data = {
-      submissionId: assessment.submissionId,
-      companyName: assessment.companyName,
-      section1: assessment.section1,
-      section2: assessment.section2,
-      section3: assessment.section3,
-      section4: assessment.section4,
-      section5: assessment.section5,
+      submissionId: (assessment as any).submissionId,
+      companyName: (assessment as any).companyName,
+      section1: (assessment as any).section1,
+      section2: (assessment as any).section2,
+      section3: (assessment as any).section3,
+      section4: (assessment as any).section4,
+      section5: (assessment as any).section5,
     };
     
     // Calculate ROI
@@ -89,7 +89,7 @@ export async function GET(
           $set: { 
             customerReport: enhancedReport,
             customerReportGeneratedAt: new Date(),
-            auditTrail: auditTrail || assessment.auditTrail
+            auditTrail: auditTrail || (assessment as any).auditTrail
           } 
         }
       );
@@ -112,7 +112,7 @@ export async function GET(
       report: enhancedReport,
       roi,
       score,
-      auditTrail: auditTrail || assessment.auditTrail || undefined,
+      auditTrail: auditTrail || (assessment as any).auditTrail || undefined,
     });
   } catch (error: any) {
     console.error('Error generating report:', error);

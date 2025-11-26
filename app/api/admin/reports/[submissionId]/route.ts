@@ -41,12 +41,12 @@ export async function GET(
       report: {
         adminReport: (assessment as any).adminReport,
         assessment: {
-          submissionId: assessment.submissionId,
-          name: assessment.name,
-          email: assessment.email,
-          companyName: assessment.companyName,
-          status: assessment.status,
-          completedAt: assessment.completedAt,
+          submissionId: (assessment as any).submissionId,
+          name: (assessment as any).name,
+          email: (assessment as any).email,
+          companyName: (assessment as any).companyName,
+          status: (assessment as any).status,
+          completedAt: (assessment as any).completedAt,
         },
       },
     });
