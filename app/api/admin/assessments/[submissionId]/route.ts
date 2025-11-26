@@ -37,9 +37,9 @@ export async function GET(
     // Use saved reports if available, otherwise calculate
     let roi, score, report, featureAnalysis;
     
-    if (assessment.customerReport && assessment.adminReport) {
+    if ((assessment as any).customerReport && (assessment as any).adminReport) {
       // Use saved reports
-      report = assessment.customerReport;
+      report = (assessment as any).customerReport;
       // Calculate ROI and score for display (they're in the reports)
       const data = {
         section1: assessment.section1,
