@@ -39,8 +39,17 @@ These packages don't need to be pre-installed as dependencies since `npx -y` han
 For Vercel and similar serverless platforms:
 
 1. **Node.js Version**: Ensure your deployment uses Node.js 18+ (Vercel defaults to Node.js 18+)
+   - Vercel automatically includes npm/npx with Node.js installations
+   - Verify in Vercel dashboard: Settings → General → Node.js Version (should be 18.x or higher)
+
 2. **Build Command**: Standard Next.js build (`npm run build`)
-3. **Environment Variables**: Set the following:
+
+3. **Verify npx Availability**: 
+   - The system automatically detects and verifies npx during MCP client initialization
+   - If npx is not found, you'll see clear error messages in the logs
+   - Run verification script: `npm run verify-npx` (add to package.json scripts)
+
+4. **Environment Variables**: Set the following:
 
 ```bash
 # HubSpot MCP (optional - will auto-detect npx if not set)
@@ -53,9 +62,15 @@ ATLAS_MCP_COMMAND=npx
 ATLAS_MCP_ARGS=-y supergateway --sse https://useappello.app.n8n.cloud/mcp/dfbad0dd-acf3-4796-ab7a-87fdd03f51a8/sse --timeout 600000 --keep-alive-timeout 600000 --retry-after-disconnect --reconnect-interval 1000
 ATLAS_API_KEY=your_key_here
 
-# Or set a custom NPX path if needed
-NPX_COMMAND=/usr/local/bin/npx
+# Optional: Set explicit NPX path if auto-detection fails
+NPX_COMMAND=npx
 ```
+
+**Important Notes for Vercel:**
+- Vercel includes npm/npx by default with Node.js
+- If you encounter "npx not found" errors, check your Node.js version in Vercel settings
+- The system will automatically find npx relative to the Node.js executable
+- No additional configuration needed unless you're using a custom Node.js setup
 
 ### Docker Environments
 
@@ -126,13 +141,179 @@ Check:
 2. **Network**: Ensure server can reach npm registry to download `@hubspot/mcp-server`
 3. **npx Path**: Verify `npx` is found (see above)
 
+## Verifying npx Availability
+
+### Local Verification (Before Deployment)
+
+#### Option 1: Run Local Verification Script
+
+```bash
+npm run verify-npx
+```
+
+This script will:
+- Find npx using all available strategies
+- Verify npx is executable
+- Display environment information
+- Provide troubleshooting guidance if npx is not found
+
+#### Option 2: Manual Verification
+
+```bash
+# Check if npx is in PATH
+which npx
+
+# Verify npx works
+npx --version
+
+# Check Node.js version (should be 18+)
+node --version
+```
+
+### Production Verification (After Deployment)
+
+#### Option 1: Health Check Endpoint (Recommended)
+
+Call the health check endpoint directly:
+
+```bash
+# Simple check (no SDK required)
+npm run check-vercel-health -- https://your-app.vercel.app
+
+# Or with environment variable
+VERCEL_URL=https://your-app.vercel.app npm run check-vercel-health
+```
+
+This calls `/api/health/npx` which verifies npx availability on the Vercel runtime.
+
+#### Option 2: Vercel SDK Verification (Advanced)
+
+Use the Vercel SDK to programmatically verify:
+
+```bash
+# Get your Vercel token from: https://vercel.com/account/tokens
+VERCEL_TOKEN=your_token npm run verify-vercel-npx -- --project=your-project
+
+# Or specify deployment URL directly
+VERCEL_TOKEN=your_token npm run verify-vercel-npx -- --deployment-url=https://your-app.vercel.app
+```
+
+This script:
+- Uses Vercel SDK to check deployment status
+- Calls the health check endpoint automatically
+- Provides detailed diagnostics
+
+#### Option 3: Runtime Verification
+
+The MCP clients automatically verify npx availability during initialization:
+- If npx is not found, you'll see clear error messages
+- Status endpoints (`/admin/system-settings/integrations`) will show npx availability status
+- Error messages include specific guidance on how to fix the issue
+
+### Health Check API Endpoint
+
+The `/api/health/npx` endpoint provides programmatic verification:
+
+```bash
+curl https://your-app.vercel.app/api/health/npx
+```
+
+Response (success):
+```json
+{
+  "success": true,
+  "npxAvailable": true,
+  "npxPath": "/usr/local/bin/npx",
+  "verified": true,
+  "duration": "45ms",
+  "environment": {
+    "nodeVersion": "v20.10.0",
+    "nodePath": "/usr/local/bin/node",
+    "platform": "linux",
+    "arch": "x64",
+    "vercel": true,
+    "vercelEnv": "production"
+  },
+  "timestamp": "2025-01-02T12:00:00.000Z"
+}
+```
+
+Response (failure):
+```json
+{
+  "success": false,
+  "npxAvailable": false,
+  "verified": false,
+  "error": "npx is not available: ...",
+  "environment": { ... },
+  "timestamp": "2025-01-02T12:00:00.000Z"
+}
+```
+
+## CI/CD Integration
+
+You can integrate npx verification into your CI/CD pipeline:
+
+### GitHub Actions Example
+
+```yaml
+name: Verify Vercel Deployment
+
+on:
+  deployment_status:
+    types: [success]
+
+jobs:
+  verify-npx:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check npx availability
+        run: |
+          npm run check-vercel-health -- ${{ env.VERCEL_URL }}
+```
+
+### Vercel Post-Deploy Hook
+
+Add to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "postdeploy": "npm run check-vercel-health -- $VERCEL_URL"
+  }
+}
+```
+
+### Manual Verification Script
+
+```bash
+#!/bin/bash
+# verify-deployment.sh
+
+DEPLOYMENT_URL=$1
+
+if [ -z "$DEPLOYMENT_URL" ]; then
+  echo "Usage: ./verify-deployment.sh https://your-app.vercel.app"
+  exit 1
+fi
+
+npm run check-vercel-health -- "$DEPLOYMENT_URL"
+```
+
 ## Testing in Production
 
 After deployment, test MCP connections:
 
-1. **Check Integration Status**: Visit `/admin/system-settings/integrations`
-2. **Review Logs**: Check server logs for MCP initialization messages
-3. **Test Functionality**: Use features that depend on MCP (e.g., ATLAS queries, HubSpot operations)
+1. **Verify npx**: 
+   - Run `npm run check-vercel-health -- https://your-app.vercel.app`
+   - Or use Vercel SDK: `VERCEL_TOKEN=token npm run verify-vercel-npx`
+2. **Check Integration Status**: Visit `/admin/system-settings/integrations`
+   - Look for "npxAvailable: true" in status responses
+   - Check for any npx-related errors
+3. **Review Logs**: Check server logs for MCP initialization messages
+   - Look for "✅ Found npx at: ..." messages
+   - Check for any "npx not available" errors
+4. **Test Functionality**: Use features that depend on MCP (e.g., ATLAS queries, HubSpot operations)
 
 ## Performance Considerations
 

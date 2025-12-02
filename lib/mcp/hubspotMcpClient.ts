@@ -5,7 +5,7 @@
  * flexible access to HubSpot CRM data and operations.
  */
 
-import { findNpx } from './findNpx';
+import { findNpx, verifyNpxAvailable } from './findNpx';
 
 // Dynamic import to handle MCP SDK dependency
 let Client: any;
@@ -39,8 +39,20 @@ let availableTools: any[] = [];
  * Initialize HubSpot MCP client
  */
 async function initializeHubspotClient(): Promise<any> {
+  // Check if client exists and is still valid
   if (hubspotClient && clientInitialized) {
-    return hubspotClient;
+    // Verify client is still connected by checking if it has the necessary methods
+    try {
+      if (typeof hubspotClient.listTools === 'function') {
+        return hubspotClient;
+      }
+    } catch (error) {
+      // Client is invalid, reset and reinitialize
+      console.warn('⚠️ Existing HubSpot client is invalid, reinitializing...');
+      hubspotClient = null;
+      clientInitialized = false;
+      availableTools = [];
+    }
   }
 
   // Prevent multiple simultaneous initializations
@@ -50,6 +62,13 @@ async function initializeHubspotClient(): Promise<any> {
 
   initializationPromise = (async () => {
     try {
+      // Verify npx is available before proceeding
+      try {
+        verifyNpxAvailable();
+      } catch (npxError: any) {
+        throw new Error(`npx is not available: ${npxError.message}. MCP clients require npx to be installed and accessible.`);
+      }
+      
       const { Client: ClientClass, StdioClientTransport: TransportClass } = await loadMCPSDK();
       
       // Get HubSpot MCP server configuration
@@ -68,6 +87,11 @@ async function initializeHubspotClient(): Promise<any> {
       }
       
       console.log(`🔄 Initializing HubSpot MCP client: ${hubspotCommand} ${hubspotArgs.join(' ')}`);
+      console.log(`📋 Environment check:`, {
+        hasAccessToken: !!accessToken,
+        tokenLength: accessToken?.length || 0,
+        commandPath: hubspotCommand,
+      });
       
       // Create stdio transport for MCP server
       const transport = new TransportClass({
@@ -78,6 +102,8 @@ async function initializeHubspotClient(): Promise<any> {
           PRIVATE_APP_ACCESS_TOKEN: accessToken,
         },
       });
+      
+      console.log(`🔌 Created transport, attempting connection...`);
 
       // Create MCP client
       const client = new ClientClass({
@@ -87,15 +113,37 @@ async function initializeHubspotClient(): Promise<any> {
         capabilities: {},
       });
 
-      // Connect to server
-      await client.connect(transport);
+      // Connect to server with timeout
+      const connectPromise = client.connect(transport);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Connection timeout after 30 seconds')), 30000);
+      });
       
-      // List available tools
-      const toolsResponse = await client.listTools();
-      availableTools = toolsResponse.tools || [];
+      try {
+        await Promise.race([connectPromise, timeoutPromise]);
+        
+        // Verify connection is working by attempting to list tools
+        // This ensures the server is actually responding
+        const toolsResponse = await client.listTools();
+        availableTools = toolsResponse.tools || [];
+        
+        if (availableTools.length === 0) {
+          console.warn('⚠️ HubSpot MCP connected but no tools available');
+        } else {
+          console.log(`✅ HubSpot MCP connected - ${availableTools.length} tools available`);
+          console.log(`📦 Available tools: ${availableTools.map((t: any) => t.name).join(', ')}`);
+        }
+      } catch (connectError: any) {
+        // If connection fails, try to get more details
+        console.error('❌ HubSpot MCP connection error details:', {
+          message: connectError.message,
+          code: connectError.code,
+          name: connectError.name,
+        });
+        throw connectError;
+      }
       
-      console.log(`✅ HubSpot MCP client initialized with ${availableTools.length} tools`);
-      console.log(`📦 Available tools: ${availableTools.map((t: any) => t.name).join(', ')}`);
+      console.log('✅ HubSpot MCP client initialized successfully');
       
       hubspotClient = client;
       clientInitialized = true;
@@ -104,8 +152,27 @@ async function initializeHubspotClient(): Promise<any> {
       return client;
     } catch (error: any) {
       console.error('❌ Failed to initialize HubSpot MCP client:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack,
+      });
       initializationPromise = null;
-      throw new Error(`HubSpot MCP initialization failed: ${error.message}`);
+      clientInitialized = false;
+      hubspotClient = null;
+      availableTools = [];
+      
+      // Provide more helpful error messages
+      let errorMessage = error.message;
+      if (error.message?.includes('Connection closed') || error.code === -32000) {
+        errorMessage = `Connection closed - The MCP server process exited immediately. This may indicate: 1) The server command failed to start, 2) Missing dependencies (try: npm install -g @hubspot/mcp-server), 3) Invalid access token, or 4) Network issues. Check server logs for details. Original error: ${error.message}`;
+      } else if (error.message?.includes('spawn') || error.message?.includes('ENOENT')) {
+        errorMessage = `Cannot find MCP server command. Ensure '${hubspotCommand}' is available in PATH or set HUBSPOT_MCP_COMMAND environment variable. Original error: ${error.message}`;
+      } else if (error.message?.includes('access token')) {
+        errorMessage = `HubSpot authentication failed. Verify HUBSPOT_PRIVATE_APP_ACCESS_TOKEN is set correctly. Original error: ${error.message}`;
+      }
+      
+      throw new Error(`HubSpot MCP initialization failed: ${errorMessage}`);
     }
   })();
 
@@ -225,13 +292,34 @@ export async function getHubspotMcpStatus(): Promise<{
   toolCount?: number;
   tools?: string[];
   error?: string;
+  npxAvailable?: boolean;
+  npxPath?: string;
 }> {
   try {
+    // Check npx availability first
+    let npxAvailable = false;
+    let npxPath = '';
+    try {
+      const { findNpx, verifyNpxAvailable } = await import('./findNpx');
+      verifyNpxAvailable();
+      npxPath = findNpx();
+      npxAvailable = true;
+    } catch (npxError: any) {
+      return {
+        connected: false,
+        available: false,
+        npxAvailable: false,
+        error: `npx not available: ${npxError.message}`,
+      };
+    }
+    
     await initializeHubspotClient();
     
     return {
       connected: true,
       available: true,
+      npxAvailable: true,
+      npxPath,
       toolCount: availableTools.length,
       tools: availableTools.map((t: any) => t.name)
     };

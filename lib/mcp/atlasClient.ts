@@ -5,7 +5,7 @@
  * This enables access to your RAG agent with real knowledge
  */
 
-import { findNpx } from './findNpx';
+import { findNpx, verifyNpxAvailable } from './findNpx';
 
 // Dynamic import to handle MCP SDK dependency
 let Client: any;
@@ -40,8 +40,19 @@ let initializationPromise: Promise<any> | null = null;
  * Initialize ATLAS MCP client
  */
 async function initializeAtlasClient(): Promise<any> {
+  // Check if client exists and is still valid
   if (atlasClient && clientInitialized) {
-    return atlasClient;
+    // Verify client is still connected by checking if it has the necessary methods
+    try {
+      if (typeof atlasClient.listTools === 'function') {
+        return atlasClient;
+      }
+    } catch (error) {
+      // Client is invalid, reset and reinitialize
+      console.warn('⚠️ Existing ATLAS client is invalid, reinitializing...');
+      atlasClient = null;
+      clientInitialized = false;
+    }
   }
 
   // Prevent multiple simultaneous initializations
@@ -51,67 +62,123 @@ async function initializeAtlasClient(): Promise<any> {
 
   initializationPromise = (async () => {
     try {
-    // Load MCP SDK
-    const { Client: ClientClass, StdioClientTransport: TransportClass } = await loadMCPSDK();
-    
-    // Get ATLAS MCP server command from environment
-    // Based on your MCP config: uses supergateway with SSE endpoint
-    // Use environment variable if set, otherwise find npx dynamically
-    const atlasCommand = process.env.ATLAS_MCP_COMMAND || findNpx();
-    const atlasArgs = process.env.ATLAS_MCP_ARGS 
-      ? process.env.ATLAS_MCP_ARGS.split(' ')
-      : [
-          '-y', 
-          'supergateway', 
-          '--sse', 
-          'https://useappello.app.n8n.cloud/mcp/dfbad0dd-acf3-4796-ab7a-87fdd03f51a8/sse',
-          '--timeout',
-          '600000',
-          '--keep-alive-timeout',
-          '600000',
-          '--retry-after-disconnect',
-          '--reconnect-interval',
-          '1000'
-        ];
-    
-    console.log(`🔄 Initializing ATLAS MCP client: ${atlasCommand} ${atlasArgs.join(' ')}`);
-    
-    // Create stdio transport for MCP server
-    const transport = new TransportClass({
-      command: atlasCommand,
-      args: atlasArgs,
-      env: {
-        ...process.env,
-        // Add any ATLAS-specific environment variables
-        ATLAS_API_KEY: process.env.ATLAS_API_KEY,
-        ATLAS_ENDPOINT: process.env.ATLAS_ENDPOINT,
-        // supergateway may need NODE_OPTIONS (from your mcp.json)
-        NODE_OPTIONS: process.env.NODE_OPTIONS || '',
-      },
-    });
+      // Verify npx is available before proceeding
+      try {
+        verifyNpxAvailable();
+      } catch (npxError: any) {
+        throw new Error(`npx is not available: ${npxError.message}. MCP clients require npx to be installed and accessible.`);
+      }
+      
+      // Load MCP SDK
+      const { Client: ClientClass, StdioClientTransport: TransportClass } = await loadMCPSDK();
+      
+      // Get ATLAS MCP server command from environment
+      // Based on your MCP config: uses supergateway with SSE endpoint
+      // Use environment variable if set, otherwise find npx dynamically
+      const atlasCommand = process.env.ATLAS_MCP_COMMAND || findNpx();
+      const atlasArgs = process.env.ATLAS_MCP_ARGS 
+        ? process.env.ATLAS_MCP_ARGS.split(' ')
+        : [
+            '-y', 
+            'supergateway', 
+            '--sse', 
+            'https://useappello.app.n8n.cloud/mcp/dfbad0dd-acf3-4796-ab7a-87fdd03f51a8/sse',
+            '--timeout',
+            '600000',
+            '--keep-alive-timeout',
+            '600000',
+            '--retry-after-disconnect',
+            '--reconnect-interval',
+            '1000'
+          ];
+      
+      console.log(`🔄 Initializing ATLAS MCP client: ${atlasCommand} ${atlasArgs.join(' ')}`);
+      console.log(`📋 Environment check:`, {
+        hasAtlasApiKey: !!process.env.ATLAS_API_KEY,
+        hasAtlasEndpoint: !!process.env.ATLAS_ENDPOINT,
+        nodeOptions: process.env.NODE_OPTIONS || 'not set',
+      });
+      
+      // Create stdio transport for MCP server
+      const transport = new TransportClass({
+        command: atlasCommand,
+        args: atlasArgs,
+        env: {
+          ...process.env,
+          // Add any ATLAS-specific environment variables
+          ATLAS_API_KEY: process.env.ATLAS_API_KEY,
+          ATLAS_ENDPOINT: process.env.ATLAS_ENDPOINT,
+          // supergateway may need NODE_OPTIONS (from your mcp.json)
+          NODE_OPTIONS: process.env.NODE_OPTIONS || '',
+        },
+      });
+      
+      console.log(`🔌 Created transport, attempting connection...`);
 
-    // Create MCP client
-    const client = new ClientClass({
-      name: 'appello-assessment',
-      version: '1.0.0',
-    }, {
-      capabilities: {},
-    });
+      // Create MCP client
+      const client = new ClientClass({
+        name: 'appello-assessment',
+        version: '1.0.0',
+      }, {
+        capabilities: {},
+      });
 
-    // Connect to server (connect() handles initialization automatically)
-    await client.connect(transport);
-    
-    console.log('✅ ATLAS MCP client initialized successfully');
-    
-    atlasClient = client;
-    clientInitialized = true;
-    initializationPromise = null;
-    
-    return client;
+      // Connect to server (connect() handles initialization automatically)
+      // Add timeout to detect if connection hangs
+      const connectPromise = client.connect(transport);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Connection timeout after 30 seconds')), 30000);
+      });
+      
+      try {
+        await Promise.race([connectPromise, timeoutPromise]);
+        
+        // Verify connection is working by attempting to list tools
+        // This ensures the server is actually responding
+        try {
+          const testTools = await client.listTools();
+          console.log(`✅ ATLAS MCP connected - ${testTools.tools?.length || 0} tools available`);
+        } catch (verifyError: any) {
+          console.error('❌ ATLAS MCP connection verification failed:', verifyError);
+          throw new Error(`Connection established but server not responding: ${verifyError.message}`);
+        }
+      } catch (connectError: any) {
+        // If connection fails, try to get more details
+        console.error('❌ ATLAS MCP connection error details:', {
+          message: connectError.message,
+          code: connectError.code,
+          name: connectError.name,
+        });
+        throw connectError;
+      }
+      
+      console.log('✅ ATLAS MCP client initialized successfully');
+      
+      atlasClient = client;
+      clientInitialized = true;
+      initializationPromise = null;
+      
+      return client;
     } catch (error: any) {
       console.error('❌ Failed to initialize ATLAS MCP client:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack,
+      });
       initializationPromise = null;
-      throw new Error(`ATLAS MCP initialization failed: ${error.message}`);
+      clientInitialized = false;
+      atlasClient = null;
+      
+      // Provide more helpful error messages
+      let errorMessage = error.message;
+      if (error.message?.includes('Connection closed') || error.code === -32000) {
+        errorMessage = `Connection closed - The MCP server process exited immediately. This may indicate: 1) The server command failed to start, 2) Missing dependencies, 3) Network/endpoint issues, or 4) Configuration errors. Check server logs for details. Original error: ${error.message}`;
+      } else if (error.message?.includes('spawn') || error.message?.includes('ENOENT')) {
+        errorMessage = `Cannot find MCP server command. Ensure '${atlasCommand}' is available in PATH or set ATLAS_MCP_COMMAND environment variable. Original error: ${error.message}`;
+      }
+      
+      throw new Error(`ATLAS MCP initialization failed: ${errorMessage}`);
     }
   })();
 
@@ -406,6 +473,8 @@ export async function getAtlasStatus(): Promise<{
   tools?: string[];
   error?: string;
   sdkInstalled?: boolean;
+  npxAvailable?: boolean;
+  npxPath?: string;
 }> {
   try {
     // Check if SDK is installed
@@ -420,6 +489,24 @@ export async function getAtlasStatus(): Promise<{
       };
     }
     
+    // Check npx availability
+    let npxAvailable = false;
+    let npxPath = '';
+    try {
+      const { findNpx, verifyNpxAvailable } = await import('./findNpx');
+      verifyNpxAvailable();
+      npxPath = findNpx();
+      npxAvailable = true;
+    } catch (npxError: any) {
+      return {
+        connected: false,
+        available: false,
+        sdkInstalled: true,
+        npxAvailable: false,
+        error: `npx not available: ${npxError.message}`,
+      };
+    }
+    
     const client = await initializeAtlasClient();
     const tools = await client.listTools();
     
@@ -427,6 +514,8 @@ export async function getAtlasStatus(): Promise<{
       connected: true,
       available: true,
       sdkInstalled: true,
+      npxAvailable: true,
+      npxPath,
       tools: tools.tools.map((t: any) => t.name),
     };
   } catch (error: any) {
