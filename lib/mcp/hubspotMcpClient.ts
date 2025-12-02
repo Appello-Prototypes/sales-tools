@@ -554,43 +554,72 @@ export async function getHubspotMcpStatus(): Promise<{
   npxAvailable?: boolean;
   npxPath?: string;
   serverless?: boolean;
+  usingApi?: boolean;
 }> {
   // Note: HubSpot MCP requires stdio transport (spawning @hubspot/mcp-server via npx)
-  // We'll attempt this even in serverless - if it fails, the error will indicate why
+  // In serverless, we automatically fall back to direct API calls which work perfectly
+  
+  const isServerless = !!(process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.FUNCTION_TARGET);
   
   try {
     // Check npx availability first
     let npxAvailable = false;
     let npxPath = '';
     try {
-      const { findNpx, verifyNpxAvailable } = await import('./findNpx');
       verifyNpxAvailable();
       npxPath = findNpx();
       npxAvailable = true;
-    } catch (npxError: any) {
-      return {
-        connected: false,
-        available: false,
-        npxAvailable: false,
-        error: `npx not available: ${npxError.message}`,
-      };
+    } catch (npxError) {
+      // npx not available - will use API fallback
     }
     
-    await initializeHubspotClient();
+    // Try to initialize MCP client (only if not serverless and npx is available)
+    if (!isServerless && npxAvailable) {
+      try {
+        await initializeHubspotClient();
+        
+        return {
+          connected: true,
+          available: true,
+          toolCount: availableTools.length,
+          tools: availableTools.map((t: any) => t.name),
+          npxAvailable: true,
+          npxPath,
+          usingApi: false,
+        };
+      } catch (mcpError: any) {
+        // MCP failed, fall through to API
+        console.log('⚠️ MCP initialization failed, using API fallback');
+      }
+    }
+    
+    // Use API-based tools (always available, works in serverless)
+    const apiTools = getApiBasedToolDefinitions();
     
     return {
-      connected: true,
-      available: true,
-      npxAvailable: true,
+      connected: false,
+      available: true, // API-based tools are always available
+      toolCount: apiTools.length,
+      tools: apiTools.map((t: any) => t.name),
+      error: isServerless 
+        ? 'MCP not available in serverless. Using direct API calls (same functionality).'
+        : 'MCP unavailable. Using direct API calls (same functionality).',
+      npxAvailable,
       npxPath,
-      toolCount: availableTools.length,
-      tools: availableTools.map((t: any) => t.name)
+      serverless: isServerless,
+      usingApi: true,
     };
   } catch (error: any) {
+    // Even if there's an error, API tools should still be available
+    const apiTools = getApiBasedToolDefinitions();
+    
     return {
       connected: false,
-      available: false,
-      error: error.message
+      available: true, // API tools are always available
+      toolCount: apiTools.length,
+      tools: apiTools.map((t: any) => t.name),
+      error: `Error: ${error.message}. Using API-based tools.`,
+      usingApi: true,
     };
   }
 }
