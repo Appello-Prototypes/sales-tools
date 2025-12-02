@@ -473,6 +473,238 @@ export async function batchCreateHubspotAssociations(params: {
 }
 
 /**
+ * HubSpot API Tool: Create Property
+ * Equivalent to hubspot-create-property
+ */
+export async function createHubspotProperty(params: {
+  objectType: string;
+  name: string;
+  label: string;
+  groupName: string;
+  type: string;
+  fieldType?: string;
+  description?: string;
+  options?: Array<{ label: string; value: string }>;
+  formField?: boolean;
+  hidden?: boolean;
+  hasUniqueValue?: boolean;
+}): Promise<any> {
+  const { objectType, name, label, groupName, type, fieldType, description, options, formField, hidden, hasUniqueValue } = params;
+  
+  const body: any = {
+    name,
+    label,
+    groupName,
+    type,
+  };
+  
+  if (fieldType) body.fieldType = fieldType;
+  if (description) body.description = description;
+  if (options) body.options = options;
+  if (formField !== undefined) body.formField = formField;
+  if (hidden !== undefined) body.hidden = hidden;
+  if (hasUniqueValue !== undefined) body.hasUniqueValue = hasUniqueValue;
+  
+  try {
+    const response = await hubspotRequest('POST', `/crm/v3/properties/${objectType}`, body);
+    return response;
+  } catch (error: any) {
+    throw new Error(`Failed to create property: ${error.message}`);
+  }
+}
+
+/**
+ * HubSpot API Tool: Update Property
+ * Equivalent to hubspot-update-property
+ */
+export async function updateHubspotProperty(params: {
+  objectType: string;
+  propertyName: string;
+  label?: string;
+  groupName?: string;
+  description?: string;
+  options?: Array<{ label: string; value: string }>;
+  formField?: boolean;
+  hidden?: boolean;
+}): Promise<any> {
+  const { objectType, propertyName, label, groupName, description, options, formField, hidden } = params;
+  
+  const body: any = {};
+  if (label) body.label = label;
+  if (groupName) body.groupName = groupName;
+  if (description) body.description = description;
+  if (options) body.options = options;
+  if (formField !== undefined) body.formField = formField;
+  if (hidden !== undefined) body.hidden = hidden;
+  
+  try {
+    const response = await hubspotRequest('PATCH', `/crm/v3/properties/${objectType}/${propertyName}`, body);
+    return response;
+  } catch (error: any) {
+    throw new Error(`Failed to update property: ${error.message}`);
+  }
+}
+
+/**
+ * HubSpot API Tool: Get Engagement
+ * Equivalent to hubspot-get-engagement
+ */
+export async function getHubspotEngagement(params: {
+  engagementId: number;
+}): Promise<any> {
+  const { engagementId } = params;
+  
+  try {
+    const response = await hubspotRequest('GET', `/crm/v3/objects/engagements/${engagementId}`);
+    return response;
+  } catch (error: any) {
+    throw new Error(`Failed to get engagement: ${error.message}`);
+  }
+}
+
+/**
+ * HubSpot API Tool: Update Engagement
+ * Equivalent to hubspot-update-engagement
+ */
+export async function updateHubspotEngagement(params: {
+  engagementId: number;
+  ownerId?: number;
+  timestamp?: number;
+  associations?: {
+    contactIds?: number[];
+    companyIds?: number[];
+    dealIds?: number[];
+    ticketIds?: number[];
+    ownerIds?: number[];
+  };
+  metadata?: {
+    body?: string;
+    subject?: string;
+    status?: string;
+  };
+}): Promise<any> {
+  const { engagementId, ownerId, timestamp, associations, metadata } = params;
+  
+  const body: any = {};
+  if (ownerId !== undefined) body.ownerId = ownerId;
+  if (timestamp !== undefined) body.timestamp = timestamp;
+  if (associations) body.associations = associations;
+  if (metadata) body.metadata = metadata;
+  
+  try {
+    const response = await hubspotRequest('PATCH', `/crm/v3/objects/engagements/${engagementId}`, body);
+    return response;
+  } catch (error: any) {
+    throw new Error(`Failed to update engagement: ${error.message}`);
+  }
+}
+
+/**
+ * HubSpot API Tool: Get Schemas (Custom Objects)
+ * Equivalent to hubspot-get-schemas
+ */
+export async function getHubspotSchemas(): Promise<any> {
+  try {
+    const response = await hubspotRequest('GET', '/crm/v3/schemas');
+    return {
+      results: response.results || [],
+    };
+  } catch (error: any) {
+    throw new Error(`Failed to get schemas: ${error.message}`);
+  }
+}
+
+/**
+ * HubSpot API Tool: Get Link
+ * Equivalent to hubspot-get-link
+ * Generates HubSpot UI links for objects
+ */
+export async function getHubspotLink(params: {
+  portalId: string;
+  uiDomain: string;
+  pageRequests: Array<{
+    pagetype: 'record' | 'index';
+    objectTypeId: string;
+    objectId?: string;
+  }>;
+}): Promise<any> {
+  const { portalId, uiDomain, pageRequests } = params;
+  
+  // This is a client-side utility - we'll generate the URLs directly
+  const links = pageRequests.map((request) => {
+    if (request.pagetype === 'record' && request.objectId) {
+      // Record page: https://{uiDomain}/contacts/{portalId}/{objectTypeId}/{objectId}
+      return `https://${uiDomain}/contacts/${portalId}/${request.objectTypeId}/${request.objectId}`;
+    } else {
+      // Index page: https://{uiDomain}/contacts/{portalId}/{objectTypeId}
+      return `https://${uiDomain}/contacts/${portalId}/${request.objectTypeId}`;
+    }
+  });
+  
+  return {
+    links,
+  };
+}
+
+/**
+ * HubSpot API Tool: List Workflows
+ * Equivalent to hubspot-list-workflows
+ */
+export async function listHubspotWorkflows(params: {
+  limit?: number;
+  after?: string;
+}): Promise<any> {
+  const { limit = 20, after } = params;
+  
+  const queryParams: Record<string, string | number> = {
+    limit: Math.min(limit, 100),
+  };
+  
+  if (after) queryParams.after = after;
+  
+  try {
+    const response = await hubspotRequest('GET', '/automation/v3/workflows', undefined, queryParams);
+    return {
+      results: response.results || [],
+      paging: response.paging || {},
+    };
+  } catch (error: any) {
+    throw new Error(`Failed to list workflows: ${error.message}`);
+  }
+}
+
+/**
+ * HubSpot API Tool: Get Workflow
+ * Equivalent to hubspot-get-workflow
+ */
+export async function getHubspotWorkflow(params: {
+  flowId: string;
+}): Promise<any> {
+  const { flowId } = params;
+  
+  try {
+    const response = await hubspotRequest('GET', `/automation/v3/workflows/${flowId}`);
+    return response;
+  } catch (error: any) {
+    throw new Error(`Failed to get workflow: ${error.message}`);
+  }
+}
+
+/**
+ * HubSpot API Tool: Generate Feedback Link
+ * Equivalent to hubspot-generate-feedback-link
+ * This is a utility function that generates a feedback link
+ */
+export async function generateHubspotFeedbackLink(): Promise<any> {
+  // This is typically a client-side utility
+  // Return a generic feedback URL or handle as needed
+  return {
+    link: 'https://developers.hubspot.com/mcp',
+    message: 'Feedback can be submitted via the HubSpot MCP documentation',
+  };
+}
+
+/**
  * Map of MCP tool names to API functions
  */
 export const HUBSPOT_API_TOOLS: Record<string, (params: any) => Promise<any>> = {
@@ -483,10 +715,19 @@ export const HUBSPOT_API_TOOLS: Record<string, (params: any) => Promise<any>> = 
   'hubspot-list-associations': (params: any) => listHubspotAssociations(params),
   'hubspot-list-properties': (params: any) => listHubspotProperties(params),
   'hubspot-get-property': (params: any) => getHubspotProperty(params),
+  'hubspot-create-property': (params: any) => createHubspotProperty(params),
+  'hubspot-update-property': (params: any) => updateHubspotProperty(params),
   'hubspot-batch-create-objects': (params: any) => batchCreateHubspotObjects(params),
   'hubspot-batch-update-objects': (params: any) => batchUpdateHubspotObjects(params),
   'hubspot-create-engagement': (params: any) => createHubspotEngagement(params),
+  'hubspot-get-engagement': (params: any) => getHubspotEngagement(params),
+  'hubspot-update-engagement': (params: any) => updateHubspotEngagement(params),
   'hubspot-get-association-definitions': (params: any) => getHubspotAssociationDefinitions(params),
   'hubspot-batch-create-associations': (params: any) => batchCreateHubspotAssociations(params),
+  'hubspot-get-schemas': () => getHubspotSchemas(),
+  'hubspot-get-link': (params: any) => getHubspotLink(params),
+  'hubspot-list-workflows': (params: any) => listHubspotWorkflows(params),
+  'hubspot-get-workflow': (params: any) => getHubspotWorkflow(params),
+  'hubspot-generate-feedback-link': () => generateHubspotFeedbackLink(),
 };
 

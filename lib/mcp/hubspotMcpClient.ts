@@ -406,6 +406,125 @@ function getApiBasedToolDefinitions(): any[] {
         },
         required: ['fromObjectType', 'toObjectType', 'types', 'inputs']
       }
+    },
+    {
+      name: 'hubspot-create-property',
+      description: 'Create a new custom property for a HubSpot object type',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          objectType: { type: 'string', description: 'Object type' },
+          name: { type: 'string', description: 'Property internal name' },
+          label: { type: 'string', description: 'Property display label' },
+          groupName: { type: 'string', description: 'Property group name' },
+          type: { type: 'string', description: 'Property data type' },
+          fieldType: { type: 'string', description: 'Field type' },
+          description: { type: 'string', description: 'Property description' },
+          options: { type: 'array', description: 'Options for enumeration properties' },
+          formField: { type: 'boolean', description: 'Can be used in forms' },
+          hidden: { type: 'boolean', description: 'Hide property' },
+          hasUniqueValue: { type: 'boolean', description: 'Require unique values' }
+        },
+        required: ['objectType', 'name', 'label', 'groupName', 'type']
+      }
+    },
+    {
+      name: 'hubspot-update-property',
+      description: 'Update an existing custom property',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          objectType: { type: 'string', description: 'Object type' },
+          propertyName: { type: 'string', description: 'Property name' },
+          label: { type: 'string', description: 'Property display label' },
+          groupName: { type: 'string', description: 'Property group name' },
+          description: { type: 'string', description: 'Property description' },
+          options: { type: 'array', description: 'Options for enumeration properties' },
+          formField: { type: 'boolean', description: 'Can be used in forms' },
+          hidden: { type: 'boolean', description: 'Hide property' }
+        },
+        required: ['objectType', 'propertyName']
+      }
+    },
+    {
+      name: 'hubspot-get-engagement',
+      description: 'Get details of a specific engagement (note or task)',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          engagementId: { type: 'number', description: 'Engagement ID' }
+        },
+        required: ['engagementId']
+      }
+    },
+    {
+      name: 'hubspot-update-engagement',
+      description: 'Update an existing engagement (note or task)',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          engagementId: { type: 'number', description: 'Engagement ID' },
+          ownerId: { type: 'number', description: 'Owner ID' },
+          timestamp: { type: 'number', description: 'Timestamp' },
+          associations: { type: 'object', description: 'Associated records' },
+          metadata: { type: 'object', description: 'Engagement metadata' }
+        },
+        required: ['engagementId']
+      }
+    },
+    {
+      name: 'hubspot-get-schemas',
+      description: 'Get all custom object schemas defined in HubSpot',
+      inputSchema: {
+        type: 'object',
+        properties: {},
+        required: []
+      }
+    },
+    {
+      name: 'hubspot-get-link',
+      description: 'Generate HubSpot UI links for objects',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          portalId: { type: 'string', description: 'HubSpot portal ID' },
+          uiDomain: { type: 'string', description: 'HubSpot UI domain' },
+          pageRequests: { type: 'array', description: 'Array of page link requests' }
+        },
+        required: ['portalId', 'uiDomain', 'pageRequests']
+      }
+    },
+    {
+      name: 'hubspot-list-workflows',
+      description: 'List all workflows in HubSpot',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          limit: { type: 'number', description: 'Max results (default: 20, max: 100)' },
+          after: { type: 'string', description: 'Pagination cursor' }
+        },
+        required: []
+      }
+    },
+    {
+      name: 'hubspot-get-workflow',
+      description: 'Get details of a specific workflow',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          flowId: { type: 'string', description: 'Workflow ID' }
+        },
+        required: ['flowId']
+      }
+    },
+    {
+      name: 'hubspot-generate-feedback-link',
+      description: 'Generate feedback link for HubSpot MCP',
+      inputSchema: {
+        type: 'object',
+        properties: {},
+        required: []
+      }
     }
   ];
 }
