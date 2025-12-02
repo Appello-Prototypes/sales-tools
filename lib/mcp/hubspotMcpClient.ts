@@ -94,20 +94,29 @@ async function initializeHubspotClient(): Promise<any> {
       console.log(`📋 Environment check:`, {
         hasAccessToken: !!accessToken,
         tokenLength: accessToken?.length || 0,
+        tokenPrefix: accessToken?.substring(0, 10) + '...' || 'none',
         commandPath: hubspotCommand,
+        args: hubspotArgs,
+        isServerless: !!(process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.FUNCTION_TARGET),
+        nodeVersion: process.version,
+        platform: process.platform,
       });
       
       // Create stdio transport for MCP server
+      // Match Cursor config exactly: command is npx path, args are ['-y', '@hubspot/mcp-server']
       const transport = new TransportClass({
         command: hubspotCommand,
         args: hubspotArgs,
         env: {
           ...process.env,
-          PRIVATE_APP_ACCESS_TOKEN: accessToken,
+          PRIVATE_APP_ACCESS_TOKEN: accessToken, // Must match exactly what Cursor uses
         },
       });
       
       console.log(`🔌 Created transport, attempting connection...`);
+      console.log(`   → Command: ${hubspotCommand}`);
+      console.log(`   → Args: ${JSON.stringify(hubspotArgs)}`);
+      console.log(`   → Env: PRIVATE_APP_ACCESS_TOKEN=${accessToken ? accessToken.substring(0, 10) + '...' : 'NOT SET'}`);
 
       // Create MCP client
       const client = new ClientClass({
@@ -118,6 +127,9 @@ async function initializeHubspotClient(): Promise<any> {
       });
 
       // Connect to server with timeout
+      // Note: StdioClientTransport will spawn the process and handle stdio communication
+      console.log(`   → Starting connection (this will spawn: ${hubspotCommand} ${hubspotArgs.join(' ')})...`);
+      
       const connectPromise = client.connect(transport);
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Connection timeout after 30 seconds')), 30000);
@@ -125,6 +137,7 @@ async function initializeHubspotClient(): Promise<any> {
       
       try {
         await Promise.race([connectPromise, timeoutPromise]);
+        console.log(`   → Connection established, verifying...`);
         
         // Verify connection is working by attempting to list tools
         // This ensures the server is actually responding
@@ -143,7 +156,17 @@ async function initializeHubspotClient(): Promise<any> {
           message: connectError.message,
           code: connectError.code,
           name: connectError.name,
+          stack: connectError.stack?.split('\n').slice(0, 5).join('\n'),
         });
+        
+        // Check if this is a serverless environment issue
+        const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.FUNCTION_TARGET;
+        if (isServerless && (connectError.message?.includes('Connection closed') || connectError.code === -32000)) {
+          console.error('⚠️ Serverless environment detected - child process spawning may be restricted');
+          console.error('   → HubSpot MCP requires spawning @hubspot/mcp-server via npx');
+          console.error('   → Vercel serverless functions may not allow long-running child processes');
+        }
+        
         throw connectError;
       }
       
