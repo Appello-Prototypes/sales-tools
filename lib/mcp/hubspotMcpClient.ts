@@ -3,6 +3,8 @@
  * 
  * Connects to the official HubSpot MCP server to give the AI agent
  * flexible access to HubSpot CRM data and operations.
+ * Uses locally installed @hubspot/mcp-server package when available.
+ */
  */
 
 import { findNpx, verifyNpxAvailable } from './findNpx';
