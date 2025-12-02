@@ -40,6 +40,16 @@ let initializationPromise: Promise<any> | null = null;
  * Initialize ATLAS MCP client
  */
 async function initializeAtlasClient(): Promise<any> {
+  // Check if we're in a serverless environment (Vercel, etc.)
+  // Serverless functions cannot spawn long-running child processes
+  const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.FUNCTION_TARGET;
+  
+  if (isServerless) {
+    console.log('⚠️ Serverless environment detected - MCP stdio transport not supported');
+    console.log('   Falling back to HTTP endpoint for ATLAS queries');
+    throw new Error('Serverless environment: Use HTTP endpoint instead of MCP stdio transport');
+  }
+
   // Check if client exists and is still valid
   if (atlasClient && clientInitialized) {
     // Verify client is still connected by checking if it has the necessary methods
@@ -392,25 +402,41 @@ export async function queryATLAS(
     
     console.error('Error querying ATLAS via MCP:', error);
     
+    // Check if this is a serverless environment error
+    const isServerlessError = error.message?.includes('Serverless environment') || 
+                              error.message?.includes('Connection closed') ||
+                              process.env.VERCEL === '1';
+    
+    if (isServerlessError) {
+      logCallback?.('info', `      → Serverless environment detected, using HTTP fallback`);
+    }
+    
     // Fallback: Try HTTP endpoint if MCP fails
-    return await queryATLASFallback(query, auditTrail);
+    return await queryATLASFallback(query, auditTrail, logCallback);
   }
 }
 
 /**
  * Fallback: Query ATLAS via HTTP endpoint
  */
-async function queryATLASFallback(query: string, auditTrail?: AuditTrail): Promise<any> {
+async function queryATLASFallback(
+  query: string, 
+  auditTrail?: AuditTrail,
+  logCallback?: (type: 'info' | 'success' | 'error' | 'warning' | 'step', message: string, data?: any) => void
+): Promise<any> {
   const startTime = Date.now();
   
   try {
+    logCallback?.('info', `      → Using HTTP fallback endpoint...`);
+    
     const { ATLAS_MCP_ENDPOINT } = await import('../config');
     
-    if (!ATLAS_MCP_ENDPOINT) {
-      throw new Error('No ATLAS endpoint configured');
-    }
+    // Default to the SSE endpoint if not configured
+    const endpoint = ATLAS_MCP_ENDPOINT || 'https://useappello.app.n8n.cloud/mcp/dfbad0dd-acf3-4796-ab7a-87fdd03f51a8/sse';
     
-    const response = await fetch(ATLAS_MCP_ENDPOINT, {
+    logCallback?.('info', `      → Calling: ${endpoint}`);
+    
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -421,10 +447,17 @@ async function queryATLASFallback(query: string, auditTrail?: AuditTrail): Promi
     const duration = Date.now() - startTime;
     
     if (!response.ok) {
-      throw new Error(`ATLAS HTTP fallback failed: ${response.statusText}`);
+      const errorText = await response.text().catch(() => response.statusText);
+      throw new Error(`ATLAS HTTP fallback failed: ${response.status} ${errorText}`);
     }
     
     const result = await response.json();
+    
+    const resultCount = result.results?.length || result.length || 0;
+    logCallback?.('success', `      ✅ HTTP fallback query completed`, {
+      resultCount,
+      duration: `${duration}ms`,
+    });
     
     if (auditTrail) {
       addAuditEntry(auditTrail, {
@@ -435,15 +468,19 @@ async function queryATLASFallback(query: string, auditTrail?: AuditTrail): Promi
           query,
           response: {
             success: true,
-            summary: `Found ${result.results?.length || 0} results`,
+            summary: `Found ${resultCount} results`,
           },
         } as any,
       });
     }
     
-    return result;
+    return {
+      results: result.results || result,
+      success: true,
+    };
   } catch (error: any) {
     console.error('ATLAS HTTP fallback also failed:', error);
+    logCallback?.('error', `      ❌ HTTP fallback failed: ${error.message}`);
     return { results: [], error: error.message };
   }
 }
@@ -475,7 +512,46 @@ export async function getAtlasStatus(): Promise<{
   sdkInstalled?: boolean;
   npxAvailable?: boolean;
   npxPath?: string;
+  serverless?: boolean;
+  fallbackAvailable?: boolean;
 }> {
+  // Check if we're in a serverless environment
+  const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.FUNCTION_TARGET;
+  
+  if (isServerless) {
+    // In serverless, check HTTP fallback availability
+    try {
+      const { ATLAS_MCP_ENDPOINT } = await import('../config');
+      const endpoint = ATLAS_MCP_ENDPOINT || 'https://useappello.app.n8n.cloud/mcp/dfbad0dd-acf3-4796-ab7a-87fdd03f51a8/sse';
+      
+      // Quick connectivity check
+      const testResponse = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: 'test' }),
+        signal: AbortSignal.timeout(5000), // 5 second timeout
+      });
+      
+      return {
+        connected: false,
+        available: true, // Available via HTTP fallback
+        sdkInstalled: true,
+        serverless: true,
+        fallbackAvailable: testResponse.ok,
+        error: 'Serverless environment: Using HTTP fallback (MCP stdio not supported)',
+      };
+    } catch (error: any) {
+      return {
+        connected: false,
+        available: false,
+        sdkInstalled: true,
+        serverless: true,
+        fallbackAvailable: false,
+        error: `Serverless environment: HTTP fallback also unavailable - ${error.message}`,
+      };
+    }
+  }
+  
   try {
     // Check if SDK is installed
     try {
