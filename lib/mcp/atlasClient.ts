@@ -89,28 +89,42 @@ async function initializeAtlasClient(): Promise<any> {
           hasAtlasEndpoint: !!process.env.ATLAS_ENDPOINT,
         });
         
-        // Try StreamableHTTP first (preferred), fallback to SSE
+        // Try SSE transport (matches supergateway behavior)
+        // SSE transport: GET for SSE stream, POST for messages to the endpoint from SSE
         try {
-          if (StreamableHTTPTransportClass) {
-            console.log(`   → Using StreamableHTTP transport`);
-            transport = new StreamableHTTPTransportClass(new URL(sseEndpoint), {
+          if (SSETransportClass) {
+            console.log(`   → Using SSE transport (matches supergateway)`);
+            // SSE transport automatically handles:
+            // 1. GET to SSE endpoint to start stream
+            // 2. Receives messages endpoint from SSE event
+            // 3. POSTs messages to that endpoint
+            transport = new SSETransportClass(new URL(sseEndpoint), {
+              eventSourceInit: {
+                headers: {
+                  'Accept': 'text/event-stream',
+                  ...(process.env.ATLAS_API_KEY && { 'Authorization': `Bearer ${process.env.ATLAS_API_KEY}` }),
+                },
+              },
               requestInit: {
                 headers: {
+                  'Accept': 'application/json, text/event-stream', // Required by endpoint
+                  'Content-Type': 'application/json',
                   ...(process.env.ATLAS_API_KEY && { 'Authorization': `Bearer ${process.env.ATLAS_API_KEY}` }),
                 },
               },
             });
-          } else if (SSETransportClass) {
-            console.log(`   → Using SSE transport`);
-            transport = new SSETransportClass(new URL(sseEndpoint), {
-              eventSourceInit: {
+          } else if (StreamableHTTPTransportClass) {
+            console.log(`   → Using StreamableHTTP transport`);
+            transport = new StreamableHTTPTransportClass(new URL(sseEndpoint), {
+              requestInit: {
                 headers: {
+                  'Accept': 'text/event-stream',
                   ...(process.env.ATLAS_API_KEY && { 'Authorization': `Bearer ${process.env.ATLAS_API_KEY}` }),
                 },
               },
             });
           } else {
-            throw new Error('Neither StreamableHTTP nor SSE transport available');
+            throw new Error('Neither SSE nor StreamableHTTP transport available');
           }
         } catch (transportError: any) {
           throw new Error(`Failed to create SSE/HTTP transport: ${transportError.message}`);
@@ -177,6 +191,10 @@ async function initializeAtlasClient(): Promise<any> {
       });
 
       // Connect to server (connect() handles initialization automatically)
+      // For SSE transport, connect() will automatically call start() which:
+      // 1. GETs the SSE endpoint to start the stream
+      // 2. Receives the messages endpoint from the SSE event
+      // 3. Uses that endpoint for POSTing messages
       // Add timeout to detect if connection hangs
       const connectPromise = client.connect(transport);
       const timeoutPromise = new Promise((_, reject) => {
