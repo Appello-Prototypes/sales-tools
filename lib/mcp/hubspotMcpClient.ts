@@ -76,11 +76,46 @@ async function initializeHubspotClient(): Promise<any> {
       const { Client: ClientClass, StdioClientTransport: TransportClass } = await loadMCPSDK();
       
       // Get HubSpot MCP server configuration
-      // Use environment variable if set, otherwise find npx dynamically
-      const hubspotCommand = process.env.HUBSPOT_MCP_COMMAND || findNpx();
-      const hubspotArgs = process.env.HUBSPOT_MCP_ARGS 
-        ? process.env.HUBSPOT_MCP_ARGS.split(' ')
-        : ['-y', '@hubspot/mcp-server'];
+      // Try to use locally installed package first (faster, more reliable in serverless)
+      // Fall back to npx -y if not installed
+      let hubspotCommand: string;
+      let hubspotArgs: string[];
+      
+      if (process.env.HUBSPOT_MCP_COMMAND) {
+        // Use explicit command from environment
+        hubspotCommand = process.env.HUBSPOT_MCP_COMMAND;
+        hubspotArgs = process.env.HUBSPOT_MCP_ARGS 
+          ? process.env.HUBSPOT_MCP_ARGS.split(' ')
+          : ['-y', '@hubspot/mcp-server'];
+      } else {
+        // Try to find locally installed @hubspot/mcp-server first
+        // This avoids downloading the package in serverless environments
+        try {
+          // Use require.resolve to find the package (works in both dev and production)
+          const packagePath = require.resolve('@hubspot/mcp-server/package.json');
+          const { resolve, dirname } = require('path');
+          const packageDir = dirname(packagePath);
+          const mainFile = resolve(packageDir, 'dist', 'index.js');
+          const { existsSync } = require('fs');
+          
+          if (existsSync(mainFile)) {
+            // Use node to run the locally installed package directly
+            console.log(`   → Found locally installed @hubspot/mcp-server, using direct path`);
+            hubspotCommand = process.execPath; // Use node
+            hubspotArgs = [mainFile];
+          } else {
+            // Fall back to npx -y (will download on first use)
+            console.log(`   → @hubspot/mcp-server main file not found, using npx -y`);
+            hubspotCommand = findNpx();
+            hubspotArgs = ['-y', '@hubspot/mcp-server'];
+          }
+        } catch (error: any) {
+          // If we can't resolve the package, fall back to npx
+          console.log(`   → Could not resolve @hubspot/mcp-server package (${error.message}), using npx -y`);
+          hubspotCommand = findNpx();
+          hubspotArgs = ['-y', '@hubspot/mcp-server'];
+        }
+      }
       
       const accessToken = process.env.HUBSPOT_PRIVATE_APP_ACCESS_TOKEN || 
                           process.env.PRIVATE_APP_ACCESS_TOKEN ||
