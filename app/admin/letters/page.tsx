@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Loader2, Search, Eye, Mail } from 'lucide-react';
+import { Loader2, Search, Eye, Mail, Plus, Settings } from 'lucide-react';
 
 interface GeneratedLetter {
   _id: string;
@@ -98,24 +98,38 @@ export default function AllLettersPage() {
 
   if (loading) {
     return (
-      <AdminLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading letters...</p>
-          </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading letters...</p>
         </div>
-      </AdminLayout>
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
       <div className="p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">All Generated Letters</h1>
-            <p className="text-muted-foreground">View and manage all cold call letters</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Letters</h1>
+                <p className="text-muted-foreground">View and manage all generated letters</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Link href="/admin/letter-settings">
+                  <Button variant="outline" size="icon">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/admin/letters/create">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Letter
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
 
           {error && (
@@ -133,12 +147,6 @@ export default function AllLettersPage() {
                   <CardTitle>Letters</CardTitle>
                   <CardDescription>{letters.length} letters found</CardDescription>
                 </div>
-                <Link href="/admin/cold-call-letters">
-                  <Button>
-                    <Mail className="h-4 w-4 mr-2" />
-                    Generate New Letter
-                  </Button>
-                </Link>
               </div>
             </CardHeader>
             <CardContent>
@@ -177,8 +185,8 @@ export default function AllLettersPage() {
                 <div className="text-center py-12">
                   <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground">No letters found</p>
-                  <Link href="/admin/cold-call-letters">
-                    <Button className="mt-4">Generate Your First Letter</Button>
+                  <Link href="/admin/letters/create">
+                    <Button className="mt-4">Create Your First Letter</Button>
                   </Link>
                 </div>
               ) : (
@@ -261,7 +269,6 @@ export default function AllLettersPage() {
           </Card>
         </div>
       </div>
-    </AdminLayout>
   );
 }
 

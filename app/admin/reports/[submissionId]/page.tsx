@@ -54,7 +54,7 @@ export default function AdminReportPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading sales intelligence report...</p>
@@ -65,12 +65,12 @@ export default function AdminReportPage() {
 
   if (!report) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[400px]">
         <Card className="max-w-2xl">
           <CardContent className="p-8 text-center">
             <p className="text-muted-foreground">Admin report not found or not yet generated</p>
-            <Link href="/admin/dashboard">
-              <Button className="mt-4">Back to Dashboard</Button>
+            <Link href="/admin/submissions">
+              <Button className="mt-4">Back to Submissions</Button>
             </Link>
           </CardContent>
         </Card>
@@ -81,11 +81,11 @@ export default function AdminReportPage() {
   const { adminReport, assessment } = report;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="p-6 lg:p-8 bg-gray-50">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <Link href="/admin/dashboard">
+          <Link href="/">
             <Button variant="ghost">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard

@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -272,15 +271,15 @@ export default function SubmissionsPage() {
     switch (grade) {
       case 'A+':
       case 'A':
-        return 'text-green-600';
+        return 'text-green-600 dark:text-green-500';
       case 'B+':
       case 'B':
-        return 'text-blue-600';
+        return 'text-blue-600 dark:text-blue-500';
       case 'C+':
       case 'C':
-        return 'text-yellow-600';
+        return 'text-yellow-600 dark:text-yellow-500';
       default:
-        return 'text-gray-600';
+        return 'text-gray-600 dark:text-muted-foreground';
     }
   };
 
@@ -354,23 +353,21 @@ export default function SubmissionsPage() {
 
   if (loading) {
     return (
-      <AdminLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading...</p>
-          </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
-      </AdminLayout>
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
+    <>
       <div className="p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">All Submissions</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-foreground mb-2">All Submissions</h1>
             <p className="text-muted-foreground">
               View and manage all assessment submissions
             </p>
@@ -734,7 +731,7 @@ export default function SubmissionsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </>
   );
 }
 

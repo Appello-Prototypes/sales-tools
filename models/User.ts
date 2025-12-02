@@ -19,6 +19,8 @@ export interface IUser extends Document {
   lastLogin?: Date;
   isActive: boolean;
   googleOAuth?: IGoogleOAuth;
+  inviteToken?: string;
+  inviteTokenExpiry?: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -40,6 +42,8 @@ const UserSchema = new Schema<IUser>(
     },
     lastLogin: { type: Date },
     isActive: { type: Boolean, default: true },
+    inviteToken: { type: String },
+    inviteTokenExpiry: { type: Date },
     googleOAuth: {
       accessToken: String,
       refreshToken: String,

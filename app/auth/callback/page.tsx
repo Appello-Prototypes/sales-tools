@@ -48,7 +48,7 @@ function AuthCallbackContent() {
         window.close();
       } else {
         // Redirect to dashboard
-        router.push('/admin/dashboard');
+        router.push('/');
       }
     } else {
       // No token, redirect to login

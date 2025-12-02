@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     // For login, use backend callback URL (Google redirects here)
     // Backend then redirects to frontend with token
     const protocol = request.headers.get('x-forwarded-proto') || 'http';
-    const host = request.headers.get('host') || 'localhost:3000';
+    const host = request.headers.get('host') || 'localhost:3002';
     const backendCallbackUri = `${protocol}://${host}/api/auth/google/callback`;
     
     // State can be userId (for email connection) or 'login' (for initial login)

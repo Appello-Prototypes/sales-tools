@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -429,11 +428,10 @@ export default function AssessmentFormPage() {
   };
 
   return (
-    <AdminLayout>
-      <div className="p-6 lg:p-8">
+    <div className="p-6 lg:p-8">
         <div className="max-w-5xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Assessment Form</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-foreground mb-2">Assessment Form</h1>
             <p className="text-muted-foreground">
               Complete view of all assessment questions organized by section
             </p>
@@ -498,7 +496,7 @@ export default function AssessmentFormPage() {
 
                             {/* Conditional Questions */}
                             {'conditional' in q && (q as any).conditional && (
-                              <div className="mt-4 ml-4 pl-4 border-l-2 border-gray-300">
+                              <div className="mt-4 ml-4 pl-4 border-l-2 border-gray-300 dark:border-border">
                                 <p className="text-xs font-semibold text-muted-foreground mb-2">
                                   Conditional (if "{(q as any).conditional.if}"):
                                 </p>
@@ -530,7 +528,6 @@ export default function AssessmentFormPage() {
           </div>
         </div>
       </div>
-    </AdminLayout>
   );
 }
 

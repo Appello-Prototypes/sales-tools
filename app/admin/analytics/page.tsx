@@ -26,11 +26,9 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
-  ArrowLeft,
   Save,
   RefreshCw,
 } from 'lucide-react';
-import Link from 'next/link';
 
 interface SystemConnection {
   name: string;
@@ -163,7 +161,7 @@ export default function AdminAnalytics() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading analytics...</p>
@@ -173,32 +171,22 @@ export default function AdminAnalytics() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="p-6 lg:p-8">
       {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/admin/dashboard">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
-                </Button>
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">System Analytics & Configuration</h1>
-                <p className="text-sm text-muted-foreground">Monitor connections, configure scoring, and manage AI prompts</p>
-              </div>
-            </div>
-            <Button onClick={loadSystemStatus} variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">System Analytics & Configuration</h1>
+            <p className="text-sm text-muted-foreground">Monitor connections, configure scoring, and manage AI prompts</p>
           </div>
+          <Button onClick={loadSystemStatus} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto">
         <Tabs defaultValue="connections" className="space-y-6">
           <TabsList>
             <TabsTrigger value="connections">System Connections</TabsTrigger>

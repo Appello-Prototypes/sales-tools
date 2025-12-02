@@ -53,7 +53,7 @@ export default function AssessmentDetailPage() {
         <Card className="max-w-2xl">
           <CardContent className="p-8 text-center">
             <p className="text-muted-foreground">Assessment not found</p>
-            <Link href="/admin/dashboard">
+            <Link href="/">
               <Button className="mt-4">Back to Dashboard</Button>
             </Link>
           </CardContent>
@@ -71,10 +71,10 @@ export default function AssessmentDetailPage() {
   const adminDerivation = adminReport?._derivation;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="p-6 lg:p-8 bg-gray-50">
+      <div className="max-w-7xl mx-auto">
         <div className="mb-6">
-          <Link href="/admin/dashboard">
+          <Link href="/">
             <Button variant="ghost">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard

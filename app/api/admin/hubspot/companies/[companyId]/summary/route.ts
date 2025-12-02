@@ -12,7 +12,11 @@ export async function GET(
     }
 
     const { companyId } = await params;
-    const hubspotApiKey = process.env.HUBSPOT_API_KEY;
+    const hubspotApiKey = 
+      process.env.HUBSPOT_API_KEY || 
+      process.env.HUBSPOT_PRIVATE_APP_ACCESS_TOKEN ||
+      process.env.NEXT_PUBLIC_HUBSPOT_API_KEY ||
+      process.env.HUBSPOT_ACCESS_TOKEN;
     const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
     
     if (!hubspotApiKey) {

@@ -6,22 +6,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Image from 'next/image';
+import { useTheme } from 'next-themes';
 
 function AdminLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { theme, resolvedTheme } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleConnecting, setGoogleConnecting] = useState(false);
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [isSettingPassword, setIsSettingPassword] = useState(false);
 
-  // Check for error in URL params
+  // Check for invite token or error in URL params
   useEffect(() => {
     const errorParam = searchParams.get('error');
+    const inviteParam = searchParams.get('invite');
+    
     if (errorParam) {
       setError(decodeURIComponent(errorParam));
       // Clean URL
+      window.history.replaceState({}, '', '/admin/login');
+    }
+    
+    if (inviteParam) {
+      setInviteToken(inviteParam);
+      setIsSettingPassword(true);
+      // Clean URL but keep invite token in state
       window.history.replaceState({}, '', '/admin/login');
     }
   }, [searchParams]);
@@ -39,7 +54,7 @@ function AdminLoginContent() {
       });
 
       if (response.ok) {
-        router.push('/admin/dashboard');
+        router.push('/');
       } else {
         const data = await response.json();
         setError(data.error || 'Login failed');
@@ -73,45 +88,170 @@ function AdminLoginContent() {
     }
   };
 
+  const handleSetupPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/admin/setup-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          inviteToken, 
+          email, 
+          password 
+        }),
+      });
+
+      if (response.ok) {
+        setError('');
+        alert('Password set successfully! You can now log in.');
+        setIsSettingPassword(false);
+        setInviteToken(null);
+        setPassword('');
+        setConfirmPassword('');
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to set password');
+      }
+    } catch (error) {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Admin Login</CardTitle>
-          <CardDescription>Access the assessment dashboard</CardDescription>
+          <div className="flex justify-center mb-4">
+            <Image
+              src="/Appello-Logo-Dark.svg"
+              alt="Appello Logo"
+              width={200}
+              height={52}
+              className="h-auto"
+              priority
+            />
+          </div>
+          <CardTitle className="text-2xl">
+            {isSettingPassword ? 'Set Your Password' : 'Admin Login'}
+          </CardTitle>
+          <CardDescription>
+            {isSettingPassword 
+              ? 'Set a password to complete your account setup'
+              : 'Access the assessment dashboard'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoFocus
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            {error && (
-              <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
-                {error}
+          {isSettingPassword ? (
+            <form onSubmit={handleSetupPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="setup-email">Email</Label>
+                <Input
+                  id="setup-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoFocus
+                  placeholder="Enter your email address"
+                />
               </div>
-            )}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Logging in...' : 'Login'}
-            </Button>
-          </form>
+              <div className="space-y-2">
+                <Label htmlFor="setup-password">Password</Label>
+                <Input
+                  id="setup-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="At least 8 characters"
+                  minLength={8}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  placeholder="Confirm your password"
+                  minLength={8}
+                />
+              </div>
+              {error && (
+                <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
+                  {error}
+                </div>
+              )}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Setting password...' : 'Set Password'}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setIsSettingPassword(false);
+                  setInviteToken(null);
+                  setEmail('');
+                  setPassword('');
+                  setConfirmPassword('');
+                  setError('');
+                }}
+              >
+                Back to Login
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              {error && (
+                <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
+                  {error}
+                </div>
+              )}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Logging in...' : 'Login'}
+              </Button>
+            </form>
+          )}
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">

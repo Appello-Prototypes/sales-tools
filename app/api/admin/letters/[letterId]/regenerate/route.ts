@@ -39,6 +39,18 @@ export async function POST(
       prompt += `\n\nUser Feedback for Regeneration: ${feedback}\n\nPlease regenerate the letter incorporating this feedback.`;
     }
 
+    const requestBody: any = {
+      model: settings.aiModel,
+      max_tokens: settings.maxTokens,
+      temperature: settings.temperature,
+      messages: [{ role: 'user', content: prompt }],
+    };
+
+    // Add system prompt if available
+    if (settings.systemPrompt) {
+      requestBody.system = settings.systemPrompt;
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -46,12 +58,7 @@ export async function POST(
         'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: settings.aiModel,
-        max_tokens: settings.maxTokens,
-        temperature: settings.temperature,
-        messages: [{ role: 'user', content: prompt }],
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
