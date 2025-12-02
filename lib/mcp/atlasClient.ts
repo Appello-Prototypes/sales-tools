@@ -5,6 +5,8 @@
  * This enables access to your RAG agent with real knowledge
  */
 
+import { findNpx } from './findNpx';
+
 // Dynamic import to handle MCP SDK dependency
 let Client: any;
 let StdioClientTransport: any;
@@ -54,7 +56,8 @@ async function initializeAtlasClient(): Promise<any> {
     
     // Get ATLAS MCP server command from environment
     // Based on your MCP config: uses supergateway with SSE endpoint
-    const atlasCommand = process.env.ATLAS_MCP_COMMAND || 'npx';
+    // Use environment variable if set, otherwise find npx dynamically
+    const atlasCommand = process.env.ATLAS_MCP_COMMAND || findNpx();
     const atlasArgs = process.env.ATLAS_MCP_ARGS 
       ? process.env.ATLAS_MCP_ARGS.split(' ')
       : [

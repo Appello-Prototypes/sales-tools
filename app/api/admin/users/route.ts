@@ -17,15 +17,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    await connectDB();
+    
+    // Verify user exists and check role from database (not just JWT token)
+    const currentUser = await User.findById(authUser.userId);
+    if (!currentUser || !currentUser.isActive) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     // Only admins can list users
-    if (authUser.role !== 'admin') {
+    if (currentUser.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }
       );
     }
-
-    await connectDB();
     
     const users = await User.find({}).select('-passwordHash -inviteToken').sort({ createdAt: -1 }).lean();
     
@@ -51,15 +60,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    await connectDB();
+    
+    // Verify user exists and check role from database (not just JWT token)
+    const currentUser = await User.findById(authUser.userId);
+    if (!currentUser || !currentUser.isActive) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     // Only admins can create users
-    if (authUser.role !== 'admin') {
+    if (currentUser.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }
       );
     }
-
-    await connectDB();
     
     const { email, name, role, sendInvite } = await request.json();
     
@@ -105,8 +123,7 @@ export async function POST(request: NextRequest) {
     let emailError = null;
     if (sendInvite) {
       try {
-        const adminUser = await User.findById(authUser.userId);
-        if (adminUser && adminUser.googleOAuth?.refreshToken) {
+        if (currentUser.googleOAuth?.refreshToken) {
           const protocol = request.headers.get('x-forwarded-proto') || 'http';
           const host = request.headers.get('host') || 'localhost:3002';
           const baseUrl = host.includes(':') ? `${protocol}://${host}` : (process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`);
@@ -142,7 +159,7 @@ If you didn't expect this invitation, you can safely ignore this email.
           `;
 
           await sendEmail(
-            adminUser.email,
+            currentUser.email,
             user.email,
             'Invitation to Catalyst Sales Tools',
             htmlBody,

@@ -5,6 +5,8 @@
  * flexible access to HubSpot CRM data and operations.
  */
 
+import { findNpx } from './findNpx';
+
 // Dynamic import to handle MCP SDK dependency
 let Client: any;
 let StdioClientTransport: any;
@@ -51,7 +53,8 @@ async function initializeHubspotClient(): Promise<any> {
       const { Client: ClientClass, StdioClientTransport: TransportClass } = await loadMCPSDK();
       
       // Get HubSpot MCP server configuration
-      const hubspotCommand = process.env.HUBSPOT_MCP_COMMAND || '/Users/coreyshelson/.nvm/versions/node/v24.11.1/bin/npx';
+      // Use environment variable if set, otherwise find npx dynamically
+      const hubspotCommand = process.env.HUBSPOT_MCP_COMMAND || findNpx();
       const hubspotArgs = process.env.HUBSPOT_MCP_ARGS 
         ? process.env.HUBSPOT_MCP_ARGS.split(' ')
         : ['-y', '@hubspot/mcp-server'];
