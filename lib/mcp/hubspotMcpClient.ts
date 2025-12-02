@@ -7,6 +7,7 @@
  */
 
 import { findNpx, verifyNpxAvailable } from './findNpx';
+import { HUBSPOT_API_TOOLS } from '@/lib/hubspot/apiClient';
 
 // Dynamic import to handle MCP SDK dependency
 let Client: any;
@@ -243,20 +244,194 @@ async function initializeHubspotClient(): Promise<any> {
 }
 
 /**
+ * Get API-based tool definitions (fallback when MCP isn't available)
+ */
+function getApiBasedToolDefinitions(): any[] {
+  return [
+    {
+      name: 'hubspot-get-user-details',
+      description: 'Get current HubSpot user details, hub ID, and authorized scopes',
+      inputSchema: {
+        type: 'object',
+        properties: {},
+        required: []
+      }
+    },
+    {
+      name: 'hubspot-list-objects',
+      description: 'List HubSpot objects (contacts, companies, deals, etc.) with pagination',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          objectType: { type: 'string', description: 'Object type: contacts, companies, deals, tickets, etc.' },
+          limit: { type: 'number', description: 'Max results (default: 100, max: 100)' },
+          after: { type: 'string', description: 'Pagination cursor' },
+          properties: { type: 'array', items: { type: 'string' }, description: 'Properties to return' },
+          associations: { type: 'array', items: { type: 'string' }, description: 'Associations to include' },
+          archived: { type: 'boolean', description: 'Include archived objects' }
+        },
+        required: ['objectType']
+      }
+    },
+    {
+      name: 'hubspot-search-objects',
+      description: 'Search HubSpot objects with filters and query',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          objectType: { type: 'string', description: 'Object type to search' },
+          query: { type: 'string', description: 'Text search query' },
+          filterGroups: { type: 'array', description: 'Filter groups for advanced filtering' },
+          properties: { type: 'array', items: { type: 'string' }, description: 'Properties to return' },
+          limit: { type: 'number', description: 'Max results (default: 10, max: 100)' },
+          after: { type: 'string', description: 'Pagination cursor' },
+          sorts: { type: 'array', description: 'Sort criteria' }
+        },
+        required: ['objectType']
+      }
+    },
+    {
+      name: 'hubspot-batch-read-objects',
+      description: 'Get multiple HubSpot objects by their IDs',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          objectType: { type: 'string', description: 'Object type' },
+          inputs: { type: 'array', items: { type: 'object' }, description: 'Array of object IDs to read' },
+          properties: { type: 'array', items: { type: 'string' }, description: 'Properties to return' },
+          propertiesWithHistory: { type: 'array', items: { type: 'string' }, description: 'Properties with history' }
+        },
+        required: ['objectType', 'inputs']
+      }
+    },
+    {
+      name: 'hubspot-list-associations',
+      description: 'Get associations between HubSpot objects (e.g., contacts for a company)',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          objectType: { type: 'string', description: 'Source object type' },
+          objectId: { type: 'string', description: 'Source object ID' },
+          toObjectType: { type: 'string', description: 'Target object type' },
+          after: { type: 'string', description: 'Pagination cursor' }
+        },
+        required: ['objectType', 'objectId', 'toObjectType']
+      }
+    },
+    {
+      name: 'hubspot-list-properties',
+      description: 'List all properties for a HubSpot object type',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          objectType: { type: 'string', description: 'Object type' },
+          archived: { type: 'boolean', description: 'Include archived properties' },
+          includeHidden: { type: 'boolean', description: 'Include hidden properties' }
+        },
+        required: ['objectType']
+      }
+    },
+    {
+      name: 'hubspot-get-property',
+      description: 'Get details about a specific HubSpot property',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          objectType: { type: 'string', description: 'Object type' },
+          propertyName: { type: 'string', description: 'Property name' }
+        },
+        required: ['objectType', 'propertyName']
+      }
+    },
+    {
+      name: 'hubspot-batch-create-objects',
+      description: 'Create multiple HubSpot objects in a single request',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          objectType: { type: 'string', description: 'Object type' },
+          inputs: { type: 'array', items: { type: 'object' }, description: 'Array of objects to create' }
+        },
+        required: ['objectType', 'inputs']
+      }
+    },
+    {
+      name: 'hubspot-batch-update-objects',
+      description: 'Update multiple HubSpot objects in a single request',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          objectType: { type: 'string', description: 'Object type' },
+          inputs: { type: 'array', items: { type: 'object' }, description: 'Array of objects to update' }
+        },
+        required: ['objectType', 'inputs']
+      }
+    },
+    {
+      name: 'hubspot-create-engagement',
+      description: 'Create a note or task engagement in HubSpot',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          type: { type: 'string', enum: ['NOTE', 'TASK'], description: 'Engagement type' },
+          ownerId: { type: 'number', description: 'Owner ID' },
+          associations: { type: 'object', description: 'Associated records' },
+          metadata: { type: 'object', description: 'Engagement metadata' }
+        },
+        required: ['type', 'ownerId', 'associations', 'metadata']
+      }
+    },
+    {
+      name: 'hubspot-get-association-definitions',
+      description: 'Get valid association types between object types',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          fromObjectType: { type: 'string', description: 'Source object type' },
+          toObjectType: { type: 'string', description: 'Target object type' }
+        },
+        required: ['fromObjectType', 'toObjectType']
+      }
+    },
+    {
+      name: 'hubspot-batch-create-associations',
+      description: 'Create multiple associations between objects',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          fromObjectType: { type: 'string', description: 'Source object type' },
+          toObjectType: { type: 'string', description: 'Target object type' },
+          types: { type: 'array', description: 'Association types' },
+          inputs: { type: 'array', description: 'Array of associations to create' }
+        },
+        required: ['fromObjectType', 'toObjectType', 'types', 'inputs']
+      }
+    }
+  ];
+}
+
+/**
  * Get list of available HubSpot MCP tools
+ * Falls back to API-based tools if MCP isn't available
  */
 export async function getHubspotMcpTools(): Promise<any[]> {
   try {
+    // Try to get MCP tools first
     await initializeHubspotClient();
-    return availableTools;
+    if (availableTools.length > 0) {
+      return availableTools;
+    }
   } catch (error) {
-    console.error('Failed to get HubSpot MCP tools:', error);
-    return [];
+    console.log('⚠️ HubSpot MCP not available, using API-based tools');
   }
+  
+  // Fall back to API-based tool definitions
+  return getApiBasedToolDefinitions();
 }
 
 /**
  * Call a HubSpot MCP tool
+ * Falls back to API-based implementation if MCP isn't available
  */
 export async function callHubspotMcpTool(
   toolName: string,
@@ -269,58 +444,79 @@ export async function callHubspotMcpTool(
   const startTime = Date.now();
   
   try {
-    const client = await initializeHubspotClient();
+    // First, try MCP if available
+    try {
+      const client = await initializeHubspotClient();
+      
+      // Verify tool exists in MCP
+      const tool = availableTools.find((t: any) => t.name === toolName);
+      if (tool) {
+        console.log(`🔧 Calling HubSpot MCP tool: ${toolName}`);
+        
+        // Call the MCP tool
+        const result = await client.callTool({
+          name: toolName,
+          arguments: toolInput
+        });
+        
+        const duration = Date.now() - startTime;
+        console.log(`✅ HubSpot MCP tool '${toolName}' completed in ${duration}ms`);
+        
+        // Parse result
+        let parsedResult;
+        if (Array.isArray(result.content)) {
+          const textContent = result.content
+            .filter((item: any) => item.type === 'text')
+            .map((item: any) => item.text)
+            .join('');
+          
+          try {
+            parsedResult = JSON.parse(textContent);
+          } catch {
+            parsedResult = { raw: textContent };
+          }
+        } else if (typeof result.content === 'string') {
+          try {
+            parsedResult = JSON.parse(result.content);
+          } catch {
+            parsedResult = { raw: result.content };
+          }
+        } else {
+          parsedResult = result.content || result;
+        }
+        
+        return {
+          success: true,
+          result: parsedResult
+        };
+      }
+    } catch (mcpError: any) {
+      // MCP failed, fall through to API
+      console.log(`⚠️ HubSpot MCP unavailable, using API for ${toolName}`);
+    }
     
-    // Verify tool exists
-    const tool = availableTools.find((t: any) => t.name === toolName);
-    if (!tool) {
-      const availableNames = availableTools.map((t: any) => t.name).join(', ');
+    // Fall back to API-based implementation
+    console.log(`🔧 Calling HubSpot API tool: ${toolName}`);
+    
+    const apiFunction = HUBSPOT_API_TOOLS[toolName];
+    if (!apiFunction) {
+      const availableTools = Object.keys(HUBSPOT_API_TOOLS);
       return {
         success: false,
-        error: `Tool '${toolName}' not found. Available: ${availableNames}`
+        error: `Tool '${toolName}' not found. Available: ${availableTools.join(', ')}`
       };
     }
     
-    console.log(`🔧 Calling HubSpot MCP tool: ${toolName}`);
-    
-    // Call the tool
-    const result = await client.callTool({
-      name: toolName,
-      arguments: toolInput
-    });
-    
+    const result = await apiFunction(toolInput);
     const duration = Date.now() - startTime;
-    console.log(`✅ HubSpot MCP tool '${toolName}' completed in ${duration}ms`);
-    
-    // Parse result
-    let parsedResult;
-    if (Array.isArray(result.content)) {
-      const textContent = result.content
-        .filter((item: any) => item.type === 'text')
-        .map((item: any) => item.text)
-        .join('');
-      
-      try {
-        parsedResult = JSON.parse(textContent);
-      } catch {
-        parsedResult = { raw: textContent };
-      }
-    } else if (typeof result.content === 'string') {
-      try {
-        parsedResult = JSON.parse(result.content);
-      } catch {
-        parsedResult = { raw: result.content };
-      }
-    } else {
-      parsedResult = result.content || result;
-    }
+    console.log(`✅ HubSpot API tool '${toolName}' completed in ${duration}ms`);
     
     return {
       success: true,
-      result: parsedResult
+      result: result
     };
   } catch (error: any) {
-    console.error(`❌ HubSpot MCP tool '${toolName}' failed:`, error);
+    console.error(`❌ HubSpot tool '${toolName}' failed:`, error);
     return {
       success: false,
       error: error.message
