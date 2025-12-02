@@ -10,16 +10,22 @@ import { findNpx, verifyNpxAvailable } from './findNpx';
 // Dynamic import to handle MCP SDK dependency
 let Client: any;
 let StdioClientTransport: any;
+let SSEClientTransport: any;
+let StreamableHTTPClientTransport: any;
 
 async function loadMCPSDK() {
   if (!Client || !StdioClientTransport) {
     try {
       // Import from the correct SDK paths
       const clientModule = await import('@modelcontextprotocol/sdk/client/index.js');
-      const transportModule = await import('@modelcontextprotocol/sdk/client/stdio.js');
+      const stdioModule = await import('@modelcontextprotocol/sdk/client/stdio.js');
+      const sseModule = await import('@modelcontextprotocol/sdk/client/sse.js');
+      const streamableHttpModule = await import('@modelcontextprotocol/sdk/client/streamableHttp.js');
       
       Client = clientModule.Client;
-      StdioClientTransport = transportModule.StdioClientTransport;
+      StdioClientTransport = stdioModule.StdioClientTransport;
+      SSEClientTransport = sseModule.SSEClientTransport;
+      StreamableHTTPClientTransport = streamableHttpModule.StreamableHTTPClientTransport;
       
       if (!Client || !StdioClientTransport) {
         throw new Error('MCP SDK classes not found in expected locations');
@@ -28,7 +34,7 @@ async function loadMCPSDK() {
       throw new Error(`Failed to load MCP SDK: ${error.message}. Install with: npm install @modelcontextprotocol/sdk`);
     }
   }
-  return { Client, StdioClientTransport };
+  return { Client, StdioClientTransport, SSEClientTransport, StreamableHTTPClientTransport };
 }
 import { AuditTrail, addAuditEntry } from '../ai/auditTrail';
 
@@ -41,14 +47,8 @@ let initializationPromise: Promise<any> | null = null;
  */
 async function initializeAtlasClient(): Promise<any> {
   // Check if we're in a serverless environment (Vercel, etc.)
-  // Serverless functions cannot spawn long-running child processes
+  // In serverless, use SSE transport directly instead of spawning processes
   const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.FUNCTION_TARGET;
-  
-  if (isServerless) {
-    console.log('⚠️ Serverless environment detected - MCP stdio transport not supported');
-    console.log('   Falling back to HTTP endpoint for ATLAS queries');
-    throw new Error('Serverless environment: Use HTTP endpoint instead of MCP stdio transport');
-  }
 
   // Check if client exists and is still valid
   if (atlasClient && clientInitialized) {
@@ -72,56 +72,99 @@ async function initializeAtlasClient(): Promise<any> {
 
   initializationPromise = (async () => {
     try {
-      // Verify npx is available before proceeding
-      try {
-        verifyNpxAvailable();
-      } catch (npxError: any) {
-        throw new Error(`npx is not available: ${npxError.message}. MCP clients require npx to be installed and accessible.`);
-      }
-      
       // Load MCP SDK
-      const { Client: ClientClass, StdioClientTransport: TransportClass } = await loadMCPSDK();
+      const { Client: ClientClass, StdioClientTransport: StdioTransportClass, SSEClientTransport: SSETransportClass, StreamableHTTPClientTransport: StreamableHTTPTransportClass } = await loadMCPSDK();
       
-      // Get ATLAS MCP server command from environment
-      // Based on your MCP config: uses supergateway with SSE endpoint
-      // Use environment variable if set, otherwise find npx dynamically
-      const atlasCommand = process.env.ATLAS_MCP_COMMAND || findNpx();
-      const atlasArgs = process.env.ATLAS_MCP_ARGS 
-        ? process.env.ATLAS_MCP_ARGS.split(' ')
-        : [
-            '-y', 
-            'supergateway', 
-            '--sse', 
-            'https://useappello.app.n8n.cloud/mcp/dfbad0dd-acf3-4796-ab7a-87fdd03f51a8/sse',
-            '--timeout',
-            '600000',
-            '--keep-alive-timeout',
-            '600000',
-            '--retry-after-disconnect',
-            '--reconnect-interval',
-            '1000'
-          ];
+      let transport: any;
       
-      console.log(`🔄 Initializing ATLAS MCP client: ${atlasCommand} ${atlasArgs.join(' ')}`);
-      console.log(`📋 Environment check:`, {
-        hasAtlasApiKey: !!process.env.ATLAS_API_KEY,
-        hasAtlasEndpoint: !!process.env.ATLAS_ENDPOINT,
-        nodeOptions: process.env.NODE_OPTIONS || 'not set',
-      });
-      
-      // Create stdio transport for MCP server
-      const transport = new TransportClass({
-        command: atlasCommand,
-        args: atlasArgs,
-        env: {
-          ...process.env,
-          // Add any ATLAS-specific environment variables
-          ATLAS_API_KEY: process.env.ATLAS_API_KEY,
-          ATLAS_ENDPOINT: process.env.ATLAS_ENDPOINT,
-          // supergateway may need NODE_OPTIONS (from your mcp.json)
-          NODE_OPTIONS: process.env.NODE_OPTIONS || '',
-        },
-      });
+      if (isServerless) {
+        // In serverless: Use SSE/StreamableHTTP transport directly (no child process spawning)
+        const sseEndpoint = process.env.ATLAS_MCP_ENDPOINT || 'https://useappello.app.n8n.cloud/mcp/dfbad0dd-acf3-4796-ab7a-87fdd03f51a8/sse';
+        
+        console.log(`🔄 Initializing ATLAS MCP client (Serverless mode - SSE transport)`);
+        console.log(`📋 Environment check:`, {
+          isServerless: true,
+          sseEndpoint,
+          hasAtlasApiKey: !!process.env.ATLAS_API_KEY,
+          hasAtlasEndpoint: !!process.env.ATLAS_ENDPOINT,
+        });
+        
+        // Try StreamableHTTP first (preferred), fallback to SSE
+        try {
+          if (StreamableHTTPTransportClass) {
+            console.log(`   → Using StreamableHTTP transport`);
+            transport = new StreamableHTTPTransportClass(new URL(sseEndpoint), {
+              requestInit: {
+                headers: {
+                  ...(process.env.ATLAS_API_KEY && { 'Authorization': `Bearer ${process.env.ATLAS_API_KEY}` }),
+                },
+              },
+            });
+          } else if (SSETransportClass) {
+            console.log(`   → Using SSE transport`);
+            transport = new SSETransportClass(new URL(sseEndpoint), {
+              eventSourceInit: {
+                headers: {
+                  ...(process.env.ATLAS_API_KEY && { 'Authorization': `Bearer ${process.env.ATLAS_API_KEY}` }),
+                },
+              },
+            });
+          } else {
+            throw new Error('Neither StreamableHTTP nor SSE transport available');
+          }
+        } catch (transportError: any) {
+          throw new Error(`Failed to create SSE/HTTP transport: ${transportError.message}`);
+        }
+      } else {
+        // In non-serverless: Use stdio transport with supergateway (original method)
+        // Verify npx is available before proceeding
+        try {
+          verifyNpxAvailable();
+        } catch (npxError: any) {
+          throw new Error(`npx is not available: ${npxError.message}. MCP clients require npx to be installed and accessible.`);
+        }
+        
+        // Get ATLAS MCP server command from environment
+        // Based on your MCP config: uses supergateway with SSE endpoint
+        // Use environment variable if set, otherwise find npx dynamically
+        const atlasCommand = process.env.ATLAS_MCP_COMMAND || findNpx();
+        const atlasArgs = process.env.ATLAS_MCP_ARGS 
+          ? process.env.ATLAS_MCP_ARGS.split(' ')
+          : [
+              '-y', 
+              'supergateway', 
+              '--sse', 
+              'https://useappello.app.n8n.cloud/mcp/dfbad0dd-acf3-4796-ab7a-87fdd03f51a8/sse',
+              '--timeout',
+              '600000',
+              '--keep-alive-timeout',
+              '600000',
+              '--retry-after-disconnect',
+              '--reconnect-interval',
+              '1000'
+            ];
+        
+        console.log(`🔄 Initializing ATLAS MCP client (stdio transport): ${atlasCommand} ${atlasArgs.join(' ')}`);
+        console.log(`📋 Environment check:`, {
+          hasAtlasApiKey: !!process.env.ATLAS_API_KEY,
+          hasAtlasEndpoint: !!process.env.ATLAS_ENDPOINT,
+          nodeOptions: process.env.NODE_OPTIONS || 'not set',
+        });
+        
+        // Create stdio transport for MCP server
+        transport = new StdioTransportClass({
+          command: atlasCommand,
+          args: atlasArgs,
+          env: {
+            ...process.env,
+            // Add any ATLAS-specific environment variables
+            ATLAS_API_KEY: process.env.ATLAS_API_KEY,
+            ATLAS_ENDPOINT: process.env.ATLAS_ENDPOINT,
+            // supergateway may need NODE_OPTIONS (from your mcp.json)
+            NODE_OPTIONS: process.env.NODE_OPTIONS || '',
+          },
+        });
+      }
       
       console.log(`🔌 Created transport, attempting connection...`);
 
@@ -513,32 +556,24 @@ export async function getAtlasStatus(): Promise<{
   npxAvailable?: boolean;
   npxPath?: string;
   serverless?: boolean;
-  fallbackAvailable?: boolean;
+  transportType?: string;
 }> {
   // Check if we're in a serverless environment
   const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.FUNCTION_TARGET;
   
   if (isServerless) {
-    // In serverless, check HTTP fallback availability
+    // In serverless, try to initialize with SSE transport
     try {
-      const { ATLAS_MCP_ENDPOINT } = await import('../config');
-      const endpoint = ATLAS_MCP_ENDPOINT || 'https://useappello.app.n8n.cloud/mcp/dfbad0dd-acf3-4796-ab7a-87fdd03f51a8/sse';
-      
-      // Quick connectivity check
-      const testResponse = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: 'test' }),
-        signal: AbortSignal.timeout(5000), // 5 second timeout
-      });
+      const client = await initializeAtlasClient();
+      const tools = await client.listTools();
       
       return {
-        connected: false,
-        available: true, // Available via HTTP fallback
+        connected: true,
+        available: true,
         sdkInstalled: true,
         serverless: true,
-        fallbackAvailable: testResponse.ok,
-        error: 'Serverless environment: Using HTTP fallback (MCP stdio not supported)',
+        transportType: 'SSE/StreamableHTTP',
+        tools: tools.tools.map((t: any) => t.name),
       };
     } catch (error: any) {
       return {
@@ -546,8 +581,8 @@ export async function getAtlasStatus(): Promise<{
         available: false,
         sdkInstalled: true,
         serverless: true,
-        fallbackAvailable: false,
-        error: `Serverless environment: HTTP fallback also unavailable - ${error.message}`,
+        transportType: 'SSE/StreamableHTTP (attempted)',
+        error: `Serverless SSE transport failed: ${error.message}`,
       };
     }
   }
