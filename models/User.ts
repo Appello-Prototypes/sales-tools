@@ -30,8 +30,8 @@ const UserSchema = new Schema<IUser>(
     passwordHash: { 
       type: String, 
       required: function() {
-        // Password not required if user has Google OAuth
-        return !this.googleOAuth || !this.googleOAuth.refreshToken;
+        // Password not required if user has Google OAuth or has an invite token (will set password when accepting invite)
+        return !this.googleOAuth?.refreshToken && !this.inviteToken;
       }
     },
     name: { type: String, required: true },
