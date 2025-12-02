@@ -39,16 +39,9 @@ let availableTools: any[] = [];
  * Initialize HubSpot MCP client
  */
 async function initializeHubspotClient(): Promise<any> {
-  // Note: HubSpot MCP server (@hubspot/mcp-server) only supports stdio transport
-  // In serverless environments, this requires spawning a process via npx
-  // Vercel serverless functions have limitations on child processes
-  // We'll attempt to use stdio transport but it may fail in strict serverless environments
-  const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.FUNCTION_TARGET;
-  
-  if (isServerless) {
-    console.log('⚠️ Serverless environment detected - HubSpot MCP may have limitations');
-    console.log('   Attempting stdio transport (may fail if child processes are restricted)');
-  }
+  // HubSpot MCP server (@hubspot/mcp-server) only supports stdio transport
+  // This requires spawning a process via npx, which we'll attempt even in serverless
+  // If it fails, we'll provide clear error messages
 
   // Check if client exists and is still valid
   if (hubspotClient && clientInitialized) {
@@ -307,17 +300,8 @@ export async function getHubspotMcpStatus(): Promise<{
   npxPath?: string;
   serverless?: boolean;
 }> {
-  // Check if we're in a serverless environment
-  const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.FUNCTION_TARGET;
-  
-  if (isServerless) {
-    return {
-      connected: false,
-      available: false,
-      serverless: true,
-      error: 'Serverless environment: HubSpot MCP stdio transport not supported. Use HubSpot API directly or deploy to a non-serverless environment.',
-    };
-  }
+  // Note: HubSpot MCP requires stdio transport (spawning @hubspot/mcp-server via npx)
+  // We'll attempt this even in serverless - if it fails, the error will indicate why
   
   try {
     // Check npx availability first
